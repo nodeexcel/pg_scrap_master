@@ -13,6 +13,7 @@ var amazon_category_list_url = "http://www.amazon.in/gp/site-directory/ref=nav_s
 //http://www.amazon.in/Kindle-Accessories/b/ref=sd_allcat_k_kacce/279-8515975-7779503?ie=UTF8&node=1634751031
 //http://www.amazon.in/Kindle-Accessories/b/ref=sd_allcat_k_kacce/279-8515975-7779503?ie=UTF8&node=1634751031
 //http://www.amazon.in/Kindle-Accessories/b/ref=sd_allcat_k_kacce/280-1677586-4623502?ie=UTF8&node=1634751031
+//http://www.amazon.in/gp/feature.html/ref=sd_allcat_karl3/276-6656353-1484802?ie=UTF8&docId=1000659093
 
 function add_new_catalog_url( website, new_data ){
     console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
@@ -22,12 +23,18 @@ function add_new_catalog_url( website, new_data ){
     var new_url = new_data.url;
     new_url = new_url.trim();
     
-    if( typeof new_url == 'undefined' || new_url == '' ){        
+    var new_url_text = new_data.url_text;
+    new_url_text = new_url_text.trim();
+    
+    
+    if( typeof new_url_text == 'undefined' || new_url_text == '' ){        
         
     }else{
+        new_url_text = new_url_text.toLowerCase();
+        
         where = {
             website : website,
-            url : new_url
+            url_text : new_url_text
         }
         conn_catalog_urls.find( where, function( err, result ){
             console.log( where );
@@ -41,6 +48,7 @@ function add_new_catalog_url( website, new_data ){
                     var new_catalog_url = {
                         website : website,
                         url : new_url,
+                        url_text : new_url_text,
                         count_first_page_products : new_data.count_first_page_products,
                         count_total_pages : new_data.count_total_pages,
                     }
@@ -48,9 +56,6 @@ function add_new_catalog_url( website, new_data ){
                     insert_new_catalog_url.save( function(){
                         console.log( new_catalog_url );
                         console.log('-----CATALOG URL INSERTED');
-                        
-                        process.exit(0);
-                        
                     })
                 }
             }
@@ -74,12 +79,14 @@ function verify_valid_catalog_urls( data, start_key, jquery_path ){
         return "ARUN KUMAR ALL ARE DONE";
     }else{
         //console.log( data );
-        var u = data[start_key];
+        var url = data[start_key].url;
+        var url_text = data[start_key].text;
 
         console.log( 'start_key :: '+ start_key);
-        console.log( 'start_url :: '+ u);
+        console.log( 'start_url :: '+ url);
+        console.log( 'start_url_text :: '+ url_text);
 
-        scraper_amazon.analyse_catalog_url( start_key, u, jquery_path, function( response_type, response_data ){
+        scraper_amazon.analyse_catalog_url( start_key, url, url_text,  jquery_path, function( response_type, response_data ){
             if( response_type == 'error'){
                 console.log('ERROR oCCURS')
                 console.log( response_data);
@@ -93,6 +100,7 @@ function verify_valid_catalog_urls( data, start_key, jquery_path ){
                     
                     var new_website = 'amazon';
                     var new_data = {
+                        url_text : response_data.url_text,
                         url : response_data.url,
                         count_first_page_products : new_count_first_page_products,
                         count_total_pages : response_data.total_pages,
