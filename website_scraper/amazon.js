@@ -16,15 +16,24 @@ module.exports = {
                 
                 if( jQuery('.s-result-list').find('li').length > 0 ){
                     jQuery('.s-result-list').find('li').each( function(){
+                        
+                        var asin = '';
+                        if( typeof  jQuery(this).attr('data-asin') != 'undefined' ){
+                            asin = jQuery(this).attr('data-asin');
+                            asin = asin.trim();
+                        }
+                        
                         var name = jQuery(this).find('a.s-access-detail-page').attr('title');
                         var url = jQuery(this).find('a.s-access-detail-page').attr('href');
                         var image = jQuery(this).find('img.s-access-image').attr('src');
                         var price = 0;
-                        if( jQuery(this).find('span.a-color-price').length > 0 ){
+                        if( typeof jQuery(this).find('span.a-color-price') != 'undefined' ){
                             jQuery(this).find('span.currencyINR').remove();
                             price = jQuery(this).find('span.a-color-price').text();
                         }
+                        
                         product = {
+                            unique : asin,
                             name : name,
                             url : url,
                             image : image,
@@ -44,7 +53,7 @@ module.exports = {
         
         
     },
-    analyse_catalog_url: function( key_manager, url,jquery_path, callback ) {
+    analyse_catalog_url: function( key_manager, url, url_text, jquery_path, callback ) {
         console.log( 'START CATALOG URL :: ' + url );
         
         parser_aa.get_html( url, function ( response_type, response_data ){
@@ -80,6 +89,7 @@ module.exports = {
                 ff =  {
                     key : key_manager,
                     url : url,
+                    url_text : url_text,
                     product_count_on_first_page : d_product_count_on_first_page,
                     total_pages : d_total_pages,
                     sample_pagination_url : sample_pagination_url,
@@ -87,7 +97,7 @@ module.exports = {
                 }
                 
                 
-                console.log(ff);
+                //console.log(ff);
                 
                 callback( 'success', ff );
             }
@@ -114,9 +124,16 @@ module.exports = {
                     if( jQuery('li').find('a').length > 0 ){
                         jQuery('li').find('a').each( function(){
                             var link = jQuery(this).attr('href');
+                            var link_text =  jQuery(this).text();
+                            link_text = link_text.trim();
                             if( link.trim() != '' ){
                                 link = 'http://www.amazon.in' + link;
-                                found_urls.push( link );
+                                row = {
+                                    url : link,
+                                    text : link_text 
+                                }
+                                
+                                found_urls.push( row );
                             }
                         })
                     }

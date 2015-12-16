@@ -3,7 +3,7 @@ var zlib = require('zlib');
 
 module.exports = {
     get_html: function ( url, callback ) {
-        console.log('GETTING URL HTML :: ' + url );
+        //console.log('GETTING URL HTML :: ' + url );
         var headers = {
             "accept-charset": "ISO-8859-1,utf-8;q=0.7,*;q=0.3",
             "accept-language": "en-US,en;q=0.8",
