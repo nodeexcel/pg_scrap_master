@@ -9,28 +9,30 @@ var scraper_amazon = require('../website_scraper/amazon');
 
 var pg_generic = require('../modules/generic');
 
+var date = require('date-and-time');
 
-function update_scrap_stat( rec_id, type  ){
+var CONFIG_scrap_number_of_pagination = 5; // total number og pages to scrap per catalog url, set 0 for all i.e to scrap all pagination pages
+var CONFIG_scrap_pages_at_a_time = 1; // number of urls to scrap at a time
+
+
+function update_scrap_stats( rec_id, type, callback  ){
+    var current_timestamp = Math.floor(Date.now() / 1000);
+    var now = new Date();
+    var current_time_dt = date.format(now, 'E YYYY-MMM-DD HH:mm:ss A');
     where = {
         "_id" :  rec_id ,
     }
     conn_catalog_urls.findOne( where, function( err, result){
         if( typeof result == 'undefined' || result.length == 0 ){
-            
         }else{
             var today_date = new Date().toJSON().slice(0,10); //YYYY-MM-DD eg 2015-12-16
-            
             count_insert = 0;
             count_update = 0;
-            
             date_wise_stats = result.get( 'date_wise_stats' );
             if( typeof date_wise_stats  == 'undefined' ){
                 date_wise_stats = {};
-                
             }else{
                _.each( date_wise_stats, function( val, key ){
-                   console.log('--- '+key);
-                   console.log('--- '+val);
                    if( key == today_date ){
                        if( typeof val.insert != 'undefined'){
                            count_insert = val.insert;
@@ -41,64 +43,38 @@ function update_scrap_stat( rec_id, type  ){
                    }
                })
             }
-            
+            var to_be_update_data = {
+                last_update_time : current_timestamp,
+                last_update_time_dt : current_time_dt,
+            }
             if( type == 'insert'){
                 count_insert = count_insert + 1;
             }
             if( type == 'update'){
                 count_update = count_update + 1;
             }
-            
-            
             date_wise_stats[ today_date ] = {
-                'last_update_time' : 'sdfsdf',
                 'insert' : count_insert,
                 'update' : count_update
             }
-                
-                
-//            console.log( date_wise_stats );
-//            console.log('arun');
-//            process.exit(0);
-
-                
-                
-            
-            
-            
+            if( type == 'scrap_start' ){
+                to_be_update_data['scrap_status']  = 1;
+                date_wise_stats[ today_date ] = {
+                    'insert' : 0,
+                    'update' : 0
+                }
+            }
+            to_be_update_data['date_wise_stats']  = date_wise_stats;
             
             conn_catalog_urls.update( where,{
-                $set: {
-                    date_wise_stats : date_wise_stats,
-                }
+                $set: to_be_update_data
             }, function (err, res){
                 if( err ){
-                    console.log('update hua hau');
+                    
                 }else{
+                    callback('ARUN KUMAR');
                 }
-                console.log( today_date );
-            
-            
-            console.log( result );
-            console.log( rec_id );
-            console.log( type );
-            
-                console.log(date_wise_stats );
-            
-                //process.exit(0);
             });
-            
-            
-            
-            
-            ///console.log( today_date );
-            
-            
-            //console.log( result );
-            //console.log( rec_id );
-            //console.log( type );
-           // process.exit(0);
-            
         }
     })
 }
@@ -142,13 +118,19 @@ function add_update_product( u_rec_id, website, website_category, new_data ){
                 insert_new_product.save( function(){
                     //console.log('----new product inserted -----------');
                     //process.exit(0);
-                    update_scrap_stat( u_rec_id, 'insert');
+                    update_scrap_stats( u_rec_id, 'insert', function( aa ){
+                        console.log('1 INSERT :: '+aa);
+                        process.exit(0);
+                    });
                     
                 })
             }else{
                 
-                update_scrap_stat( u_rec_id, 'update');
-                //console.log('already exists');
+                update_scrap_stats( u_rec_id, 'update', function( aa ){
+                    console.log('2 UPDATE :: '+aa);
+                    process.exit(0);
+                });
+                //console.log('-----already exists---------------------------');
                 //console.log(result);
                 //process.exit(0);
             }
@@ -167,56 +149,60 @@ function add_update_product( u_rec_id, website, website_category, new_data ){
     
 }
 
+function insert_update_products( u_rec_id, website, website_category, data, callback ){
+    console.log( data );
+    process.exit(0);
+}
+
+
 function process_pagination_urls( u_rec_id, website, website_category, urls, count_process, callback ){
-    console.log(" START :: process_pagination_urls");
-    console.log("---- website : "+ website);
-    console.log("---- website_category : "+ website_category);
-    //count_process : num of urls to process at a time
-    //console.log( urls );
+    console.log( "-------------------------------------------------------------------------------------------------------------------------------");
+    console.log( "---------------------------------------------------------------------STEP :: Start Processing Pagination Urls ");
+    console.log( "---------------------------------------------------------------------website ::  " + website);
+    console.log( "---------------------------------------------------------------------website_category ::  " + website_category);
+    console.log( "---------------------------------------------------------------------Pending Pagination Urls :: " + urls.length );
     
-    
-    console.log( 'pending pagination urls :: ' + urls.length );
-    
+    console.log( "---------------------------------------------------------------------At A Time Pagination Urls Process Count:: " + count_process );
+    console.log(urls);
     
     if( urls.length == 0){
-        console.log('all are done');
+        callback('0  pagination urls remains hence callback called');
     }else{
         var page_urls = [];
-        
-        
         _.each( urls, function( u, key ){
             if( page_urls.length < count_process ){
                 page_urls.push( u );
-                //delete urls[key];
                 urls.splice(key, 1);
             }
         })
-        
-        
-        
-        //console.log( urls );
-        console.log( page_urls);
-        
-        
         if( urls.length == 0 ){
-            console.log('yahan par hai');
-            
-            callback('all are done ARUN');
+            callback('0  pagination urls remains hence callback called');
         }
-        
-        
-        //console.log( urls);
-        
         if( page_urls.length > 0 ){
+            console.log( "-------------------------------------------------------------------------------------------------------------------------------");
             _.each( page_urls, function( u1, key1 ){
                 scraper_amazon.get_page_products( u1, function( res_type, res_data ){
+                    
+                    
+                    
+                    console.log('SCRAPING  URL :: ' +  u1 );
+                    console.log( res_type );
+                    //console.log( res_data );
+                    console.log('********************');
+                    console.log('********************');
                     if( res_type == 'error'){
-                                        
                     }else{
+                        console.log( 'Count products scraped :: ' + res_data.length );
                         if( res_data.length > 0 ){
-                            _.each( res_data, function( u2 ){
-                                add_update_product( u_rec_id, website, website_category, u2 );
-                            })
+                            insert_update_products( u_rec_id, website, website_category, res_data, function(){
+                                
+                            });
+                            ///i am stucked here 
+//                            _.each( res_data, function( u2 ){
+//                                add_update_product( u_rec_id, website, website_category, u2, function(){
+//                                    
+//                                });
+//                            })
                         }
                         if( urls.length > 0 ){
                             process_pagination_urls( u_rec_id, website, website_category, urls, count_process, callback );
@@ -225,82 +211,65 @@ function process_pagination_urls( u_rec_id, website, website_category, urls, cou
                 })
             })
         }
-        
-        console.log('----------------------------------------------------------------------------------------------');
-        
-        
-        
     }
-    
-    //process.exit(0);
 }
 
 function start_scrapping( pending_catalog_urls ){
     // this will process one catalog url at a time and multiple pagination urls if found for the catalog url
-    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
-    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
-    console.log( "START :: start_scrapping ");
-    console.log( "PENDING CATALOG URLS :: "+ pending_catalog_urls.length );
-    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
-    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
-    
+    console.log( "---------------------------------------------------------------------START :: start_scrapping ");
+    console.log( "---------------------------------------------------------------------PENDING CATALOG URLS :: "+ pending_catalog_urls.length );
     if( pending_catalog_urls.length == 0 ){
-        console.log('all are done');
+        console.log('*************************************************************************');
+        console.log('ALL URLS ARE PROCESSED');
+        console.log('*************************************************************************');
+        //process.exit(0);
     }else{
-        
         var to_be_scrap = false;
-        
         if( typeof pending_catalog_urls[0] != 'undefined' ){
             to_be_scrap = pending_catalog_urls[0];
-            
-            pending_catalog_urls.splice(0, 1);
-            
+            pending_catalog_urls.splice(0, 1); // remove the url from pending_catalog_urls list
         }
-        
         if( to_be_scrap == false ){
-            
         }else{
-            //console.log( pending_catalog_urls );
-            console.log( to_be_scrap );
-            
+            console.log( "---------------------------------------------------------------------Pending url going to process is below ");
             var u_url = to_be_scrap.get('url');
             var u_website = to_be_scrap.get('website');
             var u_website_category = to_be_scrap.get('url_text');
             var u_rec_id = to_be_scrap.get('_id');
-            
-            console.log( 'to_be_scrap u_url : ' + u_url);
-            console.log( 'to_be_scrap u_website : ' + u_website);
-            console.log( 'to_be_scrap u_website_category : ' + u_website_category);
-            console.log( 'u_rec_id : ' + u_rec_id );
-            
-            
-            scraper_amazon.analyse_catalog_url( 0, u_url, u_website_category, jquery_path, function( response_type, response_data ){
-                if( response_type == 'error'){
-                    console.log('ERROR oCCURS')
-                    console.log( response_data);
-                    start_scrapping(pending_catalog_urls);
-                }else{
-                    var new_count_first_page_products = response_data.product_count_on_first_page;
-                    var pagination_urls = response_data.pagination_urls;
-                    
-                    
-                    pagination_urls = _.first( pagination_urls , 5 );
-                    
-                    if( pagination_urls.length > 0 ){
-                        
-                        process_pagination_urls( u_rec_id, u_website, u_website_category, pagination_urls, 2 , function( data ){
-                            console.log( data );
-                            console.log('ppppppppppppppppp');
-                            
-                            start_scrapping(pending_catalog_urls);
-                            
-                            //process.exit(0);
-                        });
-                    }else{
+            update_scrap_stats( u_rec_id, 'scrap_start', function( aa ){
+                console.log( 'to_be_scrap u_url : ' + u_url);
+                console.log( 'to_be_scrap u_website : ' + u_website);
+                console.log( 'to_be_scrap u_website_category : ' + u_website_category);
+                console.log( 'u_rec_id : ' + u_rec_id );
+                console.log( "-------------------------------------------------------------------------------------------------------------------------------");
+                console.log( "---------------------------------------------------------------------STEP :: Analysing Catalog Url Response");
+                scraper_amazon.analyse_catalog_url( 0, u_url, u_website_category, jquery_path, function( response_type, response_data ){
+                    //console.log( response_data );
+                    if( response_type == 'error'){
+                        console.log( "---------------------------------------------------------------------ERROR OCCURS");
+                        process.exit(0);
                         start_scrapping(pending_catalog_urls);
+                    }else{
+                        console.log( "---------------------------------------------------------------------SUCCESS OCCURS");
+                        pagination_urls = response_data.pagination_urls;
+                        console.log( "---------------------------------------------------------------------Pagination Urls Found :: " + pagination_urls.length );
+                        if( CONFIG_scrap_number_of_pagination != 0 ){
+                            pagination_urls = _.first( pagination_urls , CONFIG_scrap_number_of_pagination ); // number of pagination pages to scrap products
+                        }
+                        console.log( "---------------------------------------------------------------------Pagination Urls Will Be Processed :: " + pagination_urls.length );
+                        if( pagination_urls.length > 0 ){
+                            process_pagination_urls( u_rec_id, u_website, u_website_category, pagination_urls, CONFIG_scrap_pages_at_a_time , function( data ){
+                                console.log( data );
+                                console.log('>>>>');
+                                process.exit(0);
+                                start_scrapping(pending_catalog_urls);
+                            });
+                        }else{
+                            start_scrapping(pending_catalog_urls);
+                        }
                     }
-                }
-            })
+                })
+            });
             
         }
         
@@ -364,17 +333,37 @@ function start_scrapping( pending_catalog_urls ){
 }
 
 
-w = {
-    //'_id' : '5670f8774f59fab6112e1d2c'
-}
 
-conn_catalog_urls.find( w,function(err, urls ){
+//----SCRIPT STARTING POINT--------------------------------------------
+
+
+function initiateScrapping(){
+    w = {
+        '_id' : '56837db661baea5d13dbf9f5'
+    }
+//    w = {
+//            '$or' : [
+//                {   'scrap_status' : 0 },
+//                {   'scrap_status' : { '$exists' :  false } },
+//            ]
+//    }
+    
+    conn_catalog_urls.find( w,function(err, urls ){
     if( typeof urls == 'undefined' || urls.length == 0 ){
-        console.log( 'no urls found');
+        console.log( 'no urls found------ reseting all urls');
+        conn_catalog_urls.update( {},{
+            $set: { 'scrap_status' : 0 }
+        }, {
+            multi: true 
+        },function (err, res){
+            if( err ){
+            }else{
+                initiateScrapping();
+                console.log('update hua hau');
+            }
+        });
     }else{
-        //urls = _.first( urls , 5);
-        
-        
+        //urls = _.first( urls , 5);        
         start_scrapping( urls );
         
         
@@ -428,7 +417,14 @@ conn_catalog_urls.find( w,function(err, urls ){
 //        })
     }
 })
+    
+    
 
+}
+
+
+
+initiateScrapping();
 
 
 

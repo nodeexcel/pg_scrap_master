@@ -5,14 +5,53 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
+var exphbs = require('express-handlebars');
+
+
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
 var app = express();
 
 // view engine setup
+//app.set('views', path.join(__dirname, 'views'));
+//app.set('view engine', 'jade');
+
+
+
+// Create `ExpressHandlebars` instance with a default layout.
+var hbs = exphbs.create({
+    defaultLayout: 'main',
+    partialsDir: [
+        'views/partials/',
+        'views/account/'
+    ],
+    helpers:{
+      if_eq: function(a, b, opts) {
+        if(a == b) // Or === depending on your needs
+            return opts.fn(this);
+        else
+            return opts.inverse(this);
+      },
+      if_neq: function(a, b, opts){
+        if(a != b) // Or === depending on your needs
+            return opts.fn(this);
+        else
+            return opts.inverse(this);
+      },
+      plus : function(a, b){
+        return parseInt(a) + parseInt(b)
+      }
+    }
+});
+
+// view engine setup
+app.engine('handlebars', hbs.engine);
+app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+
+
+
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));

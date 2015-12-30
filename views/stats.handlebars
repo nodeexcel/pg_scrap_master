@@ -1,0 +1,64 @@
+<div class="container">
+  
+    <div class="page-header">
+        <h2>Stats</h2>
+        Pending :  {{stats_pending}}
+        <br>
+        Done :  {{stats_done}}
+    </div>
+    <div>
+        <table border="1" cellpadding="5" cellspacing="0">
+                <tr>
+                    <th>Website</th>
+                    <th>Website Category</th>
+                    <th>Last Update</th>
+                    {{#each stat_dates}}
+                        <th>
+                            {{this}}
+                            <br>
+                            <div>
+                                <div style="width:50%;text-align:center;float:left;">
+                                    Insert
+                                </div>
+                                <div style="width:50%;text-align:center;float:right;">
+                                    Update
+                                </div>
+                            </div>
+                        </th>
+                    {{/each}}
+                </tr>
+            
+                {{#each data}}
+                    <tr>
+                        <td>
+                            {{this.website}}
+                        </td>
+                        <td>
+                            <a href="{{this.url}}" target="_BLANK">{{this.url_text}}</a><br><br>
+                            {{this._id}}
+                            
+                        </td>
+                        <td>
+                            {{this.last_update_time_dt}}
+                        </td>
+                        {{#each this.date_wise_stats}}
+                            <td>
+                                <div>
+                                <div style="width:50%;text-align:center;float:left;">
+                                    {{this.insert}}
+                                </div>
+                                <div style="width:50%;text-align:center;float:right;">
+                                    {{this.update}}
+                                </div>
+                            </div>
+                            </td>
+                        {{/each}}
+                       
+                    </tr>
+                {{/each}}
+            
+        </table>
+        
+    </div>
+
+</div>
