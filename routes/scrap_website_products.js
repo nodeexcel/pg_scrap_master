@@ -11,7 +11,7 @@ var pg_generic = require('../modules/generic');
 
 var date = require('date-and-time');
 
-var CONFIG_scrap_number_of_pagination = 5; // total number og pages to scrap per catalog url, set 0 for all i.e to scrap all pagination pages
+var CONFIG_scrap_number_of_pagination = 10; // total number og pages to scrap per catalog url, set 0 for all i.e to scrap all pagination pages
 var CONFIG_scrap_pages_at_a_time = 1; // number of urls to scrap at a time
 
 
@@ -70,9 +70,9 @@ function update_scrap_stats( rec_id, type, callback  ){
                 $set: to_be_update_data
             }, function (err, res){
                 if( err ){
-                    
+                    callback('error');
                 }else{
-                    callback('ARUN KUMAR');
+                    callback('success');
                 }
             });
         }
@@ -80,7 +80,7 @@ function update_scrap_stats( rec_id, type, callback  ){
 }
 
 
-function add_update_product( u_rec_id, website, website_category, new_data ){
+function add_update_product( u_rec_id, website, website_category, new_data, callback ){
     
     new_data.website = website;
     new_data.website_category = website_category;
@@ -111,7 +111,7 @@ function add_update_product( u_rec_id, website, website_category, new_data ){
     
     conn_scrap_data_amazon.find( where, function( err, result ){
         if( err ){
-            
+            callback('Error Occurs');
         }else{
             if( typeof result == 'undefined' || result.length == 0 ){
                 var insert_new_product  = new conn_scrap_data_amazon( product_info );
@@ -120,15 +120,15 @@ function add_update_product( u_rec_id, website, website_category, new_data ){
                     //process.exit(0);
                     update_scrap_stats( u_rec_id, 'insert', function( aa ){
                         console.log('1 INSERT :: '+aa);
-                        process.exit(0);
+                        callback('Products Inserted');
                     });
                     
                 })
             }else{
                 
                 update_scrap_stats( u_rec_id, 'update', function( aa ){
-                    console.log('2 UPDATE :: '+aa);
-                    process.exit(0);
+                    console.log('1 UPdated :: '+aa);
+                    callback('Products Updated');
                 });
                 //console.log('-----already exists---------------------------');
                 //console.log(result);
@@ -149,9 +149,17 @@ function add_update_product( u_rec_id, website, website_category, new_data ){
     
 }
 
-function insert_update_products( u_rec_id, website, website_category, data, callback ){
-    console.log( data );
-    process.exit(0);
+function insert_or_update_products( u_rec_id, website, website_category, scraped_products, callback ){
+    console.log( "---------------------------------------------------------------------Products Remaining For Insert & Update  :: " + scraped_products.length );
+    if( scraped_products.length ==  0 ){
+        callback('0 Scrapped Products Remaining Hence Callback Called');
+    }else{
+        product = scraped_products[0];
+        scraped_products.splice(0, 1); //remove first product
+        add_update_product( u_rec_id, website, website_category, product, function(){
+            insert_or_update_products( u_rec_id, website, website_category, scraped_products, callback );
+        })
+    }
 }
 
 
@@ -175,27 +183,22 @@ function process_pagination_urls( u_rec_id, website, website_category, urls, cou
                 urls.splice(key, 1);
             }
         })
-        if( urls.length == 0 ){
-            callback('0  pagination urls remains hence callback called');
-        }
         if( page_urls.length > 0 ){
             console.log( "-------------------------------------------------------------------------------------------------------------------------------");
             _.each( page_urls, function( u1, key1 ){
+                console.log('SCRAPING  URL :: ' +  u1 );
+                console.log( "-------------------------------------------------------------------------------------------------------------------------------");
                 scraper_amazon.get_page_products( u1, function( res_type, res_data ){
-                    
-                    
-                    
-                    console.log('SCRAPING  URL :: ' +  u1 );
-                    console.log( res_type );
-                    //console.log( res_data );
-                    console.log('********************');
-                    console.log('********************');
+                    console.log( "---------------------------------------------------------------------Scraping Status : " + res_type );
                     if( res_type == 'error'){
+                        console.log( "---------------------------------------------------------------------As Error Occurs Calling Recursivley");
+                        process_pagination_urls( u_rec_id, website, website_category, urls, count_process, callback );
                     }else{
-                        console.log( 'Count products scraped :: ' + res_data.length );
+                        console.log( "---------------------------------------------------------------------Count products scraped :: " + res_data.length );
                         if( res_data.length > 0 ){
-                            insert_update_products( u_rec_id, website, website_category, res_data, function(){
-                                
+                            console.log( "---------------------------------------------------------------------Going to Insert Or Update Scraped Products");
+                            insert_or_update_products( u_rec_id, website, website_category, res_data, function(){
+                                process_pagination_urls( u_rec_id, website, website_category, urls, count_process, callback );
                             });
                             ///i am stucked here 
 //                            _.each( res_data, function( u2 ){
@@ -203,8 +206,7 @@ function process_pagination_urls( u_rec_id, website, website_category, urls, cou
 //                                    
 //                                });
 //                            })
-                        }
-                        if( urls.length > 0 ){
+                        }else{
                             process_pagination_urls( u_rec_id, website, website_category, urls, count_process, callback );
                         }
                     }
@@ -216,8 +218,11 @@ function process_pagination_urls( u_rec_id, website, website_category, urls, cou
 
 function start_scrapping( pending_catalog_urls ){
     // this will process one catalog url at a time and multiple pagination urls if found for the catalog url
+    console.log('#######################################################################################################');
+    console.log('#######################################################################################################');
+    
     console.log( "---------------------------------------------------------------------START :: start_scrapping ");
-    console.log( "---------------------------------------------------------------------PENDING CATALOG URLS :: "+ pending_catalog_urls.length );
+    console.log( "-------------------------------------------------------------------------------------------------------------------------------------------------------------------PENDING CATALOG URLS :: "+ pending_catalog_urls.length );
     if( pending_catalog_urls.length == 0 ){
         console.log('*************************************************************************');
         console.log('ALL URLS ARE PROCESSED');
@@ -243,11 +248,10 @@ function start_scrapping( pending_catalog_urls ){
                 console.log( 'u_rec_id : ' + u_rec_id );
                 console.log( "-------------------------------------------------------------------------------------------------------------------------------");
                 console.log( "---------------------------------------------------------------------STEP :: Analysing Catalog Url Response");
-                scraper_amazon.analyse_catalog_url( 0, u_url, u_website_category, jquery_path, function( response_type, response_data ){
+                scraper_amazon.analyse_catalog_url( u_url, u_website_category, jquery_path, function( response_type, response_data ){
                     //console.log( response_data );
                     if( response_type == 'error'){
                         console.log( "---------------------------------------------------------------------ERROR OCCURS");
-                        process.exit(0);
                         start_scrapping(pending_catalog_urls);
                     }else{
                         console.log( "---------------------------------------------------------------------SUCCESS OCCURS");
@@ -260,8 +264,8 @@ function start_scrapping( pending_catalog_urls ){
                         if( pagination_urls.length > 0 ){
                             process_pagination_urls( u_rec_id, u_website, u_website_category, pagination_urls, CONFIG_scrap_pages_at_a_time , function( data ){
                                 console.log( data );
-                                console.log('>>>>');
-                                process.exit(0);
+                                //console.log('>>>>');
+                                //process.exit(0);
                                 start_scrapping(pending_catalog_urls);
                             });
                         }else{
@@ -313,7 +317,7 @@ function start_scrapping( pending_catalog_urls ){
 //                console.log( 'u_website : ' + u_website);
 //                console.log( 'u_website_category : ' + u_website_category);
 //                
-//                scraper_amazon.analyse_catalog_url( key1, u_url, u_website_category, jquery_path, function( response_type, response_data ){
+//                scraper_amazon.analyse_catalog_url(  u_url, u_website_category, jquery_path, function( response_type, response_data ){
 //                    if( response_type == 'error'){
 //                        console.log('ERROR oCCURS')
 //                        console.log( response_data);
@@ -338,15 +342,15 @@ function start_scrapping( pending_catalog_urls ){
 
 
 function initiateScrapping(){
-    w = {
-        '_id' : '56837db661baea5d13dbf9f5'
-    }
 //    w = {
-//            '$or' : [
-//                {   'scrap_status' : 0 },
-//                {   'scrap_status' : { '$exists' :  false } },
-//            ]
+//        '_id' : '56837db661baea5d13dbf9f5'
 //    }
+    w = {
+            '$or' : [
+                {   'scrap_status' : 0 },
+                {   'scrap_status' : { '$exists' :  false } },
+            ]
+    }
     
     conn_catalog_urls.find( w,function(err, urls ){
     if( typeof urls == 'undefined' || urls.length == 0 ){
@@ -380,7 +384,7 @@ function initiateScrapping(){
 //                //u_url = "http://www.amazon.in/Sports-Outdoor-Women-Shoes/b/ref=sd_allcat_shoes_wsports/279-9346044-4254939?ie=UTF8&node=1983579031";
 //                console.log( u_url );
 //                console.log( u_url );
-//                scraper_amazon.analyse_catalog_url( key, u_url, '', jquery_path, function( response_type, response_data ){
+//                scraper_amazon.analyse_catalog_url(  u_url, '', jquery_path, function( response_type, response_data ){
 //                    if( response_type == 'error'){
 //                        console.log('ERROR oCCURS')
 //                        console.log( response_data);

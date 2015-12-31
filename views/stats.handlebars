@@ -29,7 +29,12 @@
                 </tr>
             
                 {{#each data}}
-                    <tr>
+                    {{#if this.scrap_status }}
+                        <tr style="background-color:#01DF74;">
+                    {{else}}
+                        <tr>
+                    {{/if}}
+                    
                         <td>
                             {{this.website}}
                         </td>

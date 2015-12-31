@@ -41,7 +41,7 @@ module.exports = {
             }
         })
     },
-    analyse_catalog_url: function( key_manager, url, url_text, jquery_path, callback ) {
+    analyse_catalog_url: function( url, url_text, jquery_path, callback ) {
         parser_aa.get_html( url, function ( response_type, response_data ){
             if( response_type == 'error'){
                 callback( 'error', response_data );
@@ -69,7 +69,6 @@ module.exports = {
                     pagination_urls.push( url );
                 }
                 ff =  {
-                    key : key_manager,
                     url : url,
                     url_text : url_text,
                     product_count_on_first_page : d_product_count_on_first_page,

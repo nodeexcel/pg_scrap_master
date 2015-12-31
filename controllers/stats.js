@@ -31,14 +31,12 @@ exports.getStats = function(req, res) {
                     row = JSON.parse( row );
                     
                     scrap_status = row.scrap_status;
-                    if( typeof scrap_status != 'undefined' ){
-                        if( scrap_status == 1 ){
-                            stats_done +=  1;
-                        }else{
-                            stats_pending += 1;
-                        }
-                    }
                     
+                    if( typeof scrap_status == 'undefined' || scrap_status == 0 ){
+                        stats_pending += 1;
+                    }else{
+                        stats_done +=  1;
+                    }
                     
                     
                     var new_date_wise_stats = {};
