@@ -19,33 +19,35 @@ module.exports = {
             headers: headers,
             timeout: 60000
         };
-        
-        var req = request.get(options);
-        
-        req.on('response', function (res) {
-            var chunks = [];
-            res.on('data', function (chunk) {
-                chunks.push(chunk);
+        try{
+            var req = request.get(options);
+            req.on('response', function (res) {
+                var chunks = [];
+                res.on('data', function (chunk) {
+                    chunks.push(chunk);
+                });
+                res.on('end', function () {
+                    var buffer = Buffer.concat(chunks);
+                    var encoding = res.headers['content-encoding'];
+                    if (encoding == 'gzip') {
+                        zlib.gunzip(buffer, function (err, decoded) {
+                            callback('success', decoded && decoded.toString());
+                        });
+                    } else if (encoding == 'deflate') {
+                        zlib.inflate(buffer, function (err, decoded) {
+                            callback('success', decoded && decoded.toString());
+                        })
+                    } else {
+                        callback( 'success', buffer.toString() );
+                    }
+                });
             });
-            res.on('end', function () {
-                var buffer = Buffer.concat(chunks);
-                var encoding = res.headers['content-encoding'];
-                if (encoding == 'gzip') {
-                    zlib.gunzip(buffer, function (err, decoded) {
-                        callback('success', decoded && decoded.toString());
-                    });
-                } else if (encoding == 'deflate') {
-                    zlib.inflate(buffer, function (err, decoded) {
-                        callback('success', decoded && decoded.toString());
-                    })
-                } else {
-                    callback( 'success', buffer.toString() );
-                }
+            req.on('error', function (err) {
+                callback('error', err );
             });
-        });
-        req.on('error', function (err) {
+        }catch(err){
             callback('error', err );
-        });
+        }
     },
     currentTime: function () {
         return new Date().getTime();

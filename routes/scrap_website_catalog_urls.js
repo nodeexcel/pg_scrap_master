@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 
 var conn_catalog_urls = require('../models/catalog_urls');
-var conn_scrap_data_amazon = require('../models/scrap_data_amazon');
 var _ = require('underscore');
 var jquery_path = '../public/js/jquery-1.8.3.min.js';
 var scraper_amazon = require('../website_scraper/amazon');
@@ -64,10 +63,13 @@ function verify_valid_catalog_urls( data,  jquery_path, callback ){
         
         var url = url_data.url;
         var url_text = url_data.text;
+        var url_check_level = url_data.check_level;
+        
+        console.log( "---------------------------------------------------------------------Checking Url Check Level :: " + url_check_level );
         console.log( "---------------------------------------------------------------------Checking Url :: " + url );
         console.log( "---------------------------------------------------------------------Checking Url Text :: " + url_text );
         
-        scraper_amazon.analyse_catalog_url( url, url_text,  jquery_path, function( response_type, response_data ){
+        scraper_amazon.analyse_catalog_url( url_check_level, url, url_text,  jquery_path, function( response_type, response_data ){
             console.log( "---------------------------------------------------------------------Checking Response :: " + response_type );
             if( response_type == 'error'){
                 verify_valid_catalog_urls( data, jquery_path, callback )
@@ -89,6 +91,34 @@ function verify_valid_catalog_urls( data,  jquery_path, callback ){
                         verify_valid_catalog_urls( data,  jquery_path, callback ); 
                     });
                 }else{
+                    
+                    console.log( data.length );
+                    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+                    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+                    
+                    if( typeof response_data.url_level != 'undefined' && response_data.url_level == 0 ){
+                        if( typeof response_data.all_urls != 'undefined' ){
+                            all_urls = response_data.all_urls;
+                            if( all_urls.length > 0 ){
+                                _.each( all_urls, function( v, key ){
+                                    row = v;
+                                    row['check_level'] = response_data.url_level + 1;
+                                    data.unshift( row ); // adding new urls which were received after n level url analysed
+                                })
+                            }
+                        }
+                        
+                        //console.log( response_data );
+                        //console.log( url );
+                        //console.log( url_text );
+                    }
+                    
+                    console.log( data.length );
+                    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+                    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+                    
+                    console.log('no products found on page');
+                    //process.exit(0);
                     verify_valid_catalog_urls( data,  jquery_path, callback );
                 }
             }       
@@ -106,11 +136,12 @@ scraper_amazon.get_catalog_urls( amazon_category_list_url, jquery_path,  functio
         data = response_data.urls
         console.log( "---------------------------------------------------------------------Start :: Total Urls Found  :: " + data.length );
         if( data.length > 0 ){
+            _.each( data, function( v, key){
+                data[key]['check_level'] = 0;
+            })
             //data = _.first( data , 50);
             //console.log( data );
-            
             //process.exit(0);
-            
             var check_n_pages = 1;
             verify_valid_catalog_urls( data,  jquery_path, function(){
                 console.log('All Are Done');

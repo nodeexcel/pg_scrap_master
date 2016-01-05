@@ -292,7 +292,7 @@ function start_scrapping( pending_catalog_urls ){
                 console.log( 'u_rec_id : ' + u_rec_id );
                 console.log( "-------------------------------------------------------------------------------------------------------------------------------");
                 console.log( "---------------------------------------------------------------------STEP :: Analysing Catalog Url Response");
-                scraper_amazon.analyse_catalog_url( u_url, u_website_category, jquery_path, function( response_type, response_data ){
+                scraper_amazon.analyse_catalog_url( 1, u_url, u_website_category, jquery_path, function( response_type, response_data ){
                     //console.log( response_data );
                     if( response_type == 'error'){
                         console.log( "---------------------------------------------------------------------ERROR OCCURS");

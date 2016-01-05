@@ -36,11 +36,12 @@ module.exports = {
             }
         })
     },
-    analyse_catalog_url: function( url, url_text, jquery_path, callback ) {
+    analyse_catalog_url: function( url_level, url, url_text, jquery_path, callback ) {
         parser_aa.get_html( url, function ( response_type, response_data ){
             if( response_type == 'error'){
                 callback( 'error', response_data );
             }else{
+                all_urls = [];
                 pagination_urls = [];
                 sample_pagination_url = ''
                 jQuery = cheerio.load( response_data );
@@ -63,13 +64,46 @@ module.exports = {
                 if( pagination_urls.length == 0 && d_product_count_on_first_page > 0 ){
                     pagination_urls.push( url );
                 }
+                
+                if( jQuery('a').length > 0 ){
+                    jQuery('header').remove();
+                    jQuery('#navFooter').remove();
+                    jQuery('#rhf').remove();
+                    if( jQuery('a').length > 0 ){
+                        jQuery('a').each( function(){
+                            link = jQuery(this).attr('href');
+                            if( typeof link != 'undefined'){
+                                link_text =  jQuery(this).text();
+                                link_text = link_text.trim();
+                                if( link.trim() != '' && link_text.trim() != '' && link.indexOf('/') != -1 && link.indexOf('/product-reviews/') == -1 && link.indexOf('/gp/voting/') == -1 
+                                        && link.indexOf('/review/') == -1 && link.indexOf('/gp/pdp/profile') == -1 && link.indexOf('.pdf') == -1 ){
+                                    link = link.trim();
+                                    if( link.indexOf('amazon.in') == -1 ){
+                                        link = 'http://www.amazon.in' + link;
+                                    }
+                                    row = {
+                                        url : link,
+                                        text : link_text 
+                                    }
+                                    all_urls.push( row );
+                                }
+                            }
+                            //all_urls.push( jQuery(this).attr('href'));
+                        })
+                    }
+                    //all_urls.push( all_urls.length );
+                }
+                
+                
                 ff =  {
+                    url_level: url_level,
                     url : url,
                     url_text : url_text,
                     product_count_on_first_page : d_product_count_on_first_page,
                     total_pages : d_total_pages,
                     sample_pagination_url : sample_pagination_url,
-                    pagination_urls : pagination_urls
+                    pagination_urls : pagination_urls,
+                    all_urls : all_urls,
                 }
                 callback( 'success', ff );
             }
@@ -95,8 +129,8 @@ module.exports = {
                         
                     if( jQuery('li').find('a').length > 0 ){
                         jQuery('li').find('a').each( function(){
-                            var link = jQuery(this).attr('href');
-                            var link_text =  jQuery(this).text();
+                            link = jQuery(this).attr('href');
+                            link_text =  jQuery(this).text();
                             link_text = link_text.trim();
                             if( link.trim() != '' ){
                                 link = 'http://www.amazon.in' + link;
