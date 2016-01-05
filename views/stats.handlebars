@@ -2,6 +2,8 @@
   
     <div class="page-header">
         <h2>Stats</h2>
+        Total :  {{stats_total}}
+        <br>
         Pending :  {{stats_pending}}
         <br>
         Done :  {{stats_done}}
@@ -30,7 +32,7 @@
             
                 {{#each data}}
                     {{#if this.scrap_status }}
-                        <tr style="background-color:#01DF74;">
+                        <tr style="background-color:;">
                     {{else}}
                         <tr>
                     {{/if}}

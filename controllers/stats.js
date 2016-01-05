@@ -84,6 +84,7 @@ exports.getStats = function(req, res) {
         res.render('stats',{
             stat_dates : stat_dates,
             data : stats,
+            stats_total : stats_pending + stats_done,
             stats_pending : stats_pending,
             stats_done : stats_done
         });

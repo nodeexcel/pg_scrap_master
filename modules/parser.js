@@ -1,6 +1,8 @@
 var request = require('request');
 var zlib = require('zlib');
 
+var date = require('date-and-time');
+
 module.exports = {
     get_html: function ( url, callback ) {
         //console.log('GETTING URL HTML :: ' + url );
@@ -44,5 +46,22 @@ module.exports = {
         req.on('error', function (err) {
             callback('error', err );
         });
+    },
+    currentTime: function () {
+        return new Date().getTime();
+    },
+    currentTimestamp: function(){
+        return Math.floor(Date.now() / 1000);
+    },
+    currentDate:function(){
+        var now = new Date();
+        return date.format(now, 'YYYY-MM-DD');  
+    },
+    currentDateTimeDay:function(){
+        var now = new Date();
+        return date.format(now, 'E YYYY-MMM-DD HH:mm:ss A');
+    },
+    currentIsoDate: function(){
+        return new Date();
     }
 }

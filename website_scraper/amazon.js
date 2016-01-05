@@ -1,9 +1,10 @@
 var Spooky = require('spooky');
-
 var parser_aa = require('../modules/parser');
+var scraper_catalog_products = require('../modules/scraper_catalog_products');
 
 var cheerio = require('cheerio');
 
+var module_website = 'amazon';
 module.exports = {
     get_page_products : function( url, callback ){
         parser_aa.get_html( url, function ( response_type, response_data ){
@@ -14,25 +15,19 @@ module.exports = {
                 jQuery = cheerio.load( response_data );
                 if( jQuery('.s-result-list').find('li').length > 0 ){
                     jQuery('.s-result-list').find('li').each( function(){
-                        var asin = '';
-                        if( typeof  jQuery(this).attr('data-asin') != 'undefined' ){
-                            asin = jQuery(this).attr('data-asin');
-                            asin = asin.trim();
-                        }
-                        var name = jQuery(this).find('a.s-access-detail-page').attr('title');
-                        var url = jQuery(this).find('a.s-access-detail-page').attr('href');
-                        var image = jQuery(this).find('img.s-access-image').attr('src');
-                        var price = 0;
-                        if( typeof jQuery(this).find('span.a-color-price') != 'undefined' ){
-                            jQuery(this).find('span.currencyINR').remove();
-                            price = jQuery(this).find('span.a-color-price').text();
-                        }
+                        
+                        unique = scraper_catalog_products.getUnique( module_website, jQuery(this) );
+                        name = scraper_catalog_products.getName( module_website, jQuery(this) );
+                        price = scraper_catalog_products.getPriceText( module_website, jQuery(this) );
+                        image = scraper_catalog_products.getImage( module_website, jQuery(this) );
+                        href = scraper_catalog_products.getHref( module_website, jQuery(this) );
+                        
                         product = {
-                            unique : asin,
                             name : name,
-                            url : url,
-                            image : image,
-                            price : price
+                            img : image,
+                            href : href,
+                            price : price,
+                            unique : unique
                         }
                         products.push( product );
                     });

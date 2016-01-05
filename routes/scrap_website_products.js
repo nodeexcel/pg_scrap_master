@@ -1,13 +1,15 @@
 var express = require('express');
 var router = express.Router();
 
+var PARSER = require('../modules/parser');
+
 var conn_catalog_urls = require('../models/catalog_urls');
-var conn_scrap_data_amazon = require('../models/scrap_data_amazon');
+var conn_website_scrap_data = require('../models/website_scrap_data');
 var _ = require('underscore');
 var jquery_path = '../public/js/jquery-1.8.3.min.js';
 var scraper_amazon = require('../website_scraper/amazon');
 
-var pg_generic = require('../modules/generic');
+var GENERIC = require('../modules/generic');
 
 var date = require('date-and-time');
 
@@ -16,16 +18,14 @@ var CONFIG_scrap_pages_at_a_time = 1; // number of urls to scrap at a time
 
 
 function update_scrap_stats( rec_id, type, callback  ){
-    var current_timestamp = Math.floor(Date.now() / 1000);
-    var now = new Date();
-    var current_time_dt = date.format(now, 'E YYYY-MMM-DD HH:mm:ss A');
     where = {
         "_id" :  rec_id ,
     }
     conn_catalog_urls.findOne( where, function( err, result){
         if( typeof result == 'undefined' || result.length == 0 ){
         }else{
-            var today_date = new Date().toJSON().slice(0,10); //YYYY-MM-DD eg 2015-12-16
+            var today_date = PARSER.currentDate();
+            
             count_insert = 0;
             count_update = 0;
             date_wise_stats = result.get( 'date_wise_stats' );
@@ -44,8 +44,8 @@ function update_scrap_stats( rec_id, type, callback  ){
                })
             }
             var to_be_update_data = {
-                last_update_time : current_timestamp,
-                last_update_time_dt : current_time_dt,
+                last_update_time : PARSER.currentTimestamp(),
+                last_update_time_dt : PARSER.currentDateTimeDay(),
             }
             if( type == 'insert'){
                 count_insert = count_insert + 1;
@@ -91,12 +91,28 @@ function add_update_product( u_rec_id, website, website_category, new_data, call
     if( typeof new_data.unique != 'undefined' && new_data.unique != '' ){
         unique = new_data.unique;
     }else{
-        unique = pg_generic.getUniqueCode( website, url );
+        unique = GENERIC.getUniqueCode( website, url );
     }
     new_data.unique = unique;
     
+    
+    new_data.date_of_birth = PARSER.currentIsoDate();
+    new_data.time = PARSER.currentTimestamp();
+    new_data.time_pretty = PARSER.currentIsoDate();
+    
+    new_data.date = PARSER.currentDate();
+    
+    
+    new_data.scrap_source = 'pg_scrap_master';
+    
+    if( typeof new_data.price != 'undefined' && new_data.price != '' ){
+        new_data.price = new_data.price * 1;
+    }
+    
+    
     //console.log('-----');
     //console.log( new_data );
+    //process.exit(0);
     
     where = {
         website : website,
@@ -109,30 +125,57 @@ function add_update_product( u_rec_id, website, website_category, new_data, call
     //console.log( where );
     
     
-    conn_scrap_data_amazon.find( where, function( err, result ){
+    conn_website_scrap_data.find( where, function( err, result ){
         if( err ){
             callback('Error Occurs');
         }else{
             if( typeof result == 'undefined' || result.length == 0 ){
-                var insert_new_product  = new conn_scrap_data_amazon( product_info );
+                var insert_new_product  = new conn_website_scrap_data( product_info );
                 insert_new_product.save( function(){
-                    //console.log('----new product inserted -----------');
-                    //process.exit(0);
                     update_scrap_stats( u_rec_id, 'insert', function( aa ){
                         console.log('1 INSERT :: '+aa);
                         callback('Products Inserted');
                     });
-                    
                 })
             }else{
-                
-                update_scrap_stats( u_rec_id, 'update', function( aa ){
-                    console.log('1 UPdated :: '+aa);
-                    callback('Products Updated');
+                exist_product = result[0];
+                var exist_date = exist_product.get('date');
+                var price_history = exist_product.get('price_history');
+                if (typeof price_history == 'undefined' || !price_history || price_history == null) {
+                    price_history = [];
+                }
+                //if( exist_date == 'undefined' || (exist_date == PARSER.currentDate ) ){
+                if( exist_date == 'undefined' || ( exist_date.toString() != PARSER.currentDate().toString()  ) ){
+                    if( new_data.price != '' && new_data.price > 0){ 
+                        price_history.push({
+                            date: PARSER.currentDate(),
+                            timestamp: PARSER.currentTimestamp(),
+                            price: new_data.price*1
+                        });
+                        if (price_history.length > 30) {
+                            price_history.shift();
+                        }
+                    }
+                }
+                to_be_update_data = {
+                    date_of_birth : PARSER.currentIsoDate(),
+                    price : new_data.price,
+                    price_history: price_history,
+                    updated: 1,
+                    time: PARSER.currentTimestamp(),
+                    time_pretty: PARSER.currentIsoDate(),
+                    date: PARSER.currentDate(),
+                };
+                conn_website_scrap_data.update(where,{'$set' : to_be_update_data}, function (err, res) {
+                    if( err ){
+                        callback('Products Updated');
+                    }else{
+                        update_scrap_stats( u_rec_id, 'update', function( aa ){
+                            console.log('1 UPdated :: '+aa);
+                            callback('Products Updated');
+                        });
+                    }
                 });
-                //console.log('-----already exists---------------------------');
-                //console.log(result);
-                //process.exit(0);
             }
         }
     })
@@ -225,8 +268,9 @@ function start_scrapping( pending_catalog_urls ){
     console.log( "-------------------------------------------------------------------------------------------------------------------------------------------------------------------PENDING CATALOG URLS :: "+ pending_catalog_urls.length );
     if( pending_catalog_urls.length == 0 ){
         console.log('*************************************************************************');
-        console.log('ALL URLS ARE PROCESSED');
+        console.log('ALL URLS ARE PROCESSED ------ Going to start scrapping again ');
         console.log('*************************************************************************');
+        initiateScrapping();
         //process.exit(0);
     }else{
         var to_be_scrap = false;
