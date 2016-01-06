@@ -4,7 +4,7 @@ var scraper_catalog_products = require('../modules/scraper_catalog_products');
 
 var cheerio = require('cheerio');
 
-var module_website = 'amazon';
+var module_website = 'Flipkart';
 module.exports = {
     get_page_products : function( url, callback ){
         parser_aa.get_html( url, function ( response_type, response_data ){
@@ -37,6 +37,9 @@ module.exports = {
         })
     },
     analyse_catalog_url: function( url_level, url, url_text, jquery_path, callback ) {
+        console.log('pppppppppppppppppppppp');
+        process.exit(0);
+        callback('error','ARUN KUMAR');
         parser_aa.get_html( url, function ( response_type, response_data ){
             if( response_type == 'error'){
                 callback( 'error', response_data );
@@ -139,51 +142,34 @@ module.exports = {
             
         }else{
             parser_aa.get_html( url, function ( response_type, response_data ){
-                
                 console.log( response_type );
-                
                 if( response_type == 'error'){
                     console.log('s');
                     callback( 'error', ff );
                 }else{
-                    //console.log( response_data );
                     jQuery = cheerio.load( response_data );
-                    
                     found_urls = [];
-                    
+                    console.log(jQuery('ul.menu-links').find('.submenu').find('li').find('a').length);
+                    if( jQuery('ul.menu-links').find('.submenu').find('li').find('a').length > 0 ){
                         
-                    if( jQuery('li').find('a').length > 0 ){
-                        jQuery('li').find('a').each( function(){
+                        found_urls.push( jQuery('ul.menu-links').find('.submenu').find('li').find('a').length );
+                        jQuery('ul.menu-links').find('.submenu').find('li').find('a').each( function(){
                             link = jQuery(this).attr('href');
                             link_text =  jQuery(this).text();
                             link_text = link_text.trim();
                             if( link.trim() != '' ){
-                                link = 'http://www.amazon.in' + link;
+                                link = 'http://www.flipkart.com' + link;
                                 row = {
                                     url : link,
                                     text : link_text 
                                 }
-                                
                                 found_urls.push( row );
                             }
                         })
                     }
-                        
-                    
-
-                    var d_product_count_on_first_page = 0;
-                    var d_total_pages = 0;
-                    if( jQuery('#mainResults').find('li').length > 0 ){
-                        d_product_count_on_first_page = jQuery('#mainResults').find('li').length;
-                    }
-                    if( jQuery('#pagn').find('.pagnDisabled').length > 0 ){
-                        d_total_pages = jQuery('#pagn').find('.pagnDisabled').text().trim();
-                    }
                     ff =  {
                         urls : found_urls,
                     }
-
-
                     callback( 'success', ff );
                 }
             })

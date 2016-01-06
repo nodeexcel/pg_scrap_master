@@ -41,6 +41,9 @@ module.exports = {
                         callback( 'success', buffer.toString() );
                     }
                 });
+                res.on('error', function (err) {
+                    callback('error', err );
+                });
             });
             req.on('error', function (err) {
                 callback('error', err );

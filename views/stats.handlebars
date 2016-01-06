@@ -13,6 +13,7 @@
                 <tr>
                     <th>Website</th>
                     <th>Website Category</th>
+                    <th>Url Level</th>
                     <th>Last Update</th>
                     {{#each stat_dates}}
                         <th>
@@ -44,6 +45,9 @@
                             <a href="{{this.url}}" target="_BLANK">{{this.url_text}}</a><br><br>
                             {{this._id}}
                             
+                        </td>
+                        <td>
+                            {{this.url_level}}
                         </td>
                         <td>
                             {{this.last_update_time_dt}}
