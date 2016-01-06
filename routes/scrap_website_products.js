@@ -13,7 +13,7 @@ var GENERIC = require('../modules/generic');
 
 var date = require('date-and-time');
 
-var CONFIG_scrap_number_of_pagination = 10; // total number og pages to scrap per catalog url, set 0 for all i.e to scrap all pagination pages
+var CONFIG_scrap_number_of_pagination = 5; // total number og pages to scrap per catalog url, set 0 for all i.e to scrap all pagination pages
 var CONFIG_scrap_pages_at_a_time = 1; // number of urls to scrap at a time
 
 
