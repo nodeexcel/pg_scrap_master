@@ -389,6 +389,9 @@ var scrap_catalog = {
         if( return_price_text.indexOf('$') != -1 ){
             return_price_text = '1';
         }
+        
+        return_price_text = generic_function.getCleanNumber( return_price_text );
+        
         return return_price_text;
     },
     getBrandName: function (website, div, name) {

@@ -13,6 +13,7 @@
                 <tr>
                     <th>Website</th>
                     <th>Website Category</th>
+                    <th>Scrap Status</th>
                     <th>Url Level</th>
                     <th>Last Update</th>
                     {{#each stat_dates}}
@@ -45,6 +46,9 @@
                             <a href="{{this.url}}" target="_BLANK">{{this.url_text}}</a><br><br>
                             {{this._id}}
                             
+                        </td>
+                        <td>
+                            {{this.scrap_status}}
                         </td>
                         <td>
                             {{this.url_level}}

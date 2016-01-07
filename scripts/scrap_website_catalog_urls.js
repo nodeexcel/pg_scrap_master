@@ -1,8 +1,10 @@
 var express = require('express');
 var router = express.Router();
 var _ = require('underscore');
-var master_website_list = ['amazon','Flipkart','snapdeal','paytm','shopclues'];
 
+//*******************************************************************************************************
+//*******************************************************************************************************
+var master_website_list = ['amazon','Flipkart','snapdeal','paytm','shopclues'];
 var MASTER_WEBSITE = false;
 var args = process.argv.slice(2);
 if (args.length == 0) {
@@ -28,14 +30,12 @@ var scraper_amazon = require('../website_scraper/amazon');
 var scraper_flipkart = require('../website_scraper/flipkart');
 
 var amazon_category_list_url = "http://www.amazon.in/gp/site-directory/ref=nav_shopall_btn";
-var flipkart_category_list_url = "http://www.flipkart.com/";
+var flipkart_category_list_url = "http://www.flipkart.com/xhr/getNewMenuHtml";
 
 if( MASTER_WEBSITE == 'amazon' ){
-    console.log('AAAAAAAAAAAAA');
     scraper_master_website = scraper_amazon;
     website_category_list_url = amazon_category_list_url;
 }else if( MASTER_WEBSITE == 'Flipkart' ){
-    console.log('BBBBBBBBBBBBB');
     scraper_master_website = scraper_flipkart;
     website_category_list_url = flipkart_category_list_url;
 }
@@ -56,7 +56,8 @@ function add_new_catalog_url( website, new_data, callback ){
         new_url_text = new_url_text.toLowerCase();
         where = {
             website : website,
-            url_text : new_url_text
+            url : new_url
+            //url_text : new_url_text
         }
         conn_catalog_urls.find( where, function( err, result ){
             if( err ){
@@ -108,7 +109,6 @@ function verify_valid_catalog_urls( data,  jquery_path, callback ){
                 if( new_count_first_page_products > 0 ){
                     valid_catalog_url_count++;
                     console.log( "valid_catalog_url_count :: " + valid_catalog_url_count );
-                    var new_website = 'amazon';
                     var new_data = {
                         url_text : response_data.url_text,
                         url : response_data.url,
@@ -116,12 +116,11 @@ function verify_valid_catalog_urls( data,  jquery_path, callback ){
                         count_total_pages : response_data.total_pages,
                         url_level : url_check_level,
                     };
-                    add_new_catalog_url( new_website, new_data, function(response){
+                    add_new_catalog_url( MASTER_WEBSITE, new_data, function(response){
                         console.log( "--------------------------------------- :: " + response );
                         verify_valid_catalog_urls( data,  jquery_path, callback ); 
                     });
                 }else{
-                    
                     console.log( data.length );
                     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
                     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
@@ -156,14 +155,6 @@ function verify_valid_catalog_urls( data,  jquery_path, callback ){
     }
 }
 scraper_master_website.get_catalog_urls( website_category_list_url, jquery_path,  function( response_type, response_data ){
-    
-    //console.log()
-    
-    console.log( response_type );
-    console.log( response_data );
-    process.exit(0);
-    
-    
     console.log( "---------------------------------------------------------------------Start Checking For Catalog Urls" );
     if( response_type  == 'error'){
         console.log( "---------------------------------------------------------------------Error in getting catalog urls" );
