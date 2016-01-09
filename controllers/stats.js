@@ -3,19 +3,31 @@ var conn_catalog_urls = require('../models/catalog_urls');
 var date = require('date-and-time');
 
 
-var stat_dates = [];
+
+exports.getStats = function(req, res) {
+    var c_website = false;
+    if( req.query.website != 'undefined' && req.query.website != ''){
+        c_website = req.query.website;
+    }
+    where = {};
+    if( c_website != false ){
+        where = {
+            'website' : c_website
+        }
+    }
+    var stat_dates = [];
 var now = new Date();
 today_date = date.format( now, 'YYYY-MM-DD' );
+
 for( var i = 10; i >=1; i-- ){
     d = date.addDays(now, -i);
     d = date.format( d, 'YYYY-MM-DD' );
     stat_dates.push( d );
 }
 stat_dates.push( today_date );
-exports.getStats = function(req, res) {
     
     
-    conn_catalog_urls.find({}).sort({ last_update_time : -1, scrap_status : -1}).exec(function(err,data){
+    conn_catalog_urls.find(where).sort({ last_update_time : -1, scrap_status : -1}).exec(function(err,data){
     
     //conn_catalog_urls.find( function(err, data ) {
         var stats = [];
@@ -29,6 +41,9 @@ exports.getStats = function(req, res) {
                 for( var k in data ){
                     row = JSON.stringify( data[k] );
                     row = JSON.parse( row );
+                    
+                    
+                    scrap_website = row.website;
                     
                     scrap_status = row.scrap_status;
                     
@@ -82,6 +97,7 @@ exports.getStats = function(req, res) {
             }
         }
         res.render('stats',{
+            c_website : c_website,
             stat_dates : stat_dates,
             data : stats,
             stats_total : stats_pending + stats_done,

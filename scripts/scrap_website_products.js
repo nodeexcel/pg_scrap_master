@@ -227,9 +227,6 @@ function insert_or_update_products( u_rec_id, website, website_category, scraped
     }else{
         product = scraped_products[0];
         
-        console.log( product );
-        
-        
         scraped_products.splice(0, 1); //remove first product
         add_update_product( u_rec_id, website, website_category, product, function(){
             insert_or_update_products( u_rec_id, website, website_category, scraped_products, callback );
