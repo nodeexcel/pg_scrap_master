@@ -133,9 +133,22 @@ function add_update_product( u_rec_id, website, website_category, new_data, call
     
     new_data.scrap_source = 'pg_scrap_master';
     
+    
+    //console.log( new_data.price);
+    
     if( typeof new_data.price != 'undefined' && new_data.price != '' ){
-        new_data.price = new_data.price * 1;
+        new_data.price = GENERIC.getCleanNumber( new_data.price );
+        if( new_data.price != 'undefined' && new_data.price != '' && new_data.price > 0 ){
+            new_data.price = new_data.price * 1;
+        }
     }
+    
+    if( new_data.price == 0 || new_data.price == '' || new_data.price == 'undefined' ){
+        callback('Error Price Issue');
+    }
+    
+    //console.log( new_data.price);
+    //console.log('*******************************');
     
     
     //console.log('-----');
@@ -151,6 +164,10 @@ function add_update_product( u_rec_id, website, website_category, new_data, call
     var product_info = new_data;
     
     //console.log( where );
+    
+    
+    //console.log( product_info );
+    //process.exit(0);
     
     
     conn_website_scrap_data.find( where, function( err, result ){
