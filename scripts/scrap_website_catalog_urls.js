@@ -4,7 +4,7 @@ var _ = require('underscore');
 
 //*******************************************************************************************************
 //*******************************************************************************************************
-var master_website_list = ['amazon','Flipkart','snapdeal','paytm','shopclues'];
+var master_website_list = ['amazon','Flipkart','Snapdeal','paytm','shopclues'];
 var MASTER_WEBSITE = false;
 var args = process.argv.slice(2);
 if (args.length == 0) {
@@ -26,11 +26,15 @@ console.log('Master Website :: '+ MASTER_WEBSITE);
 var conn_catalog_urls = require('../models/catalog_urls');
 var jquery_path = '../public/js/jquery-1.8.3.min.js';
 
+var GENERIC = require('../modules/generic');
+
 var scraper_amazon = require('../website_scraper/amazon');
 var scraper_flipkart = require('../website_scraper/flipkart');
+var scraper_snapdeal = require('../website_scraper/snapdeal');
 
 var amazon_category_list_url = "http://www.amazon.in/gp/site-directory/ref=nav_shopall_btn";
 var flipkart_category_list_url = "http://www.flipkart.com/xhr/getNewMenuHtml";
+var snapdeal_category_list_url = "http://www.snapdeal.com/page/sitemap";
 
 if( MASTER_WEBSITE == 'amazon' ){
     scraper_master_website = scraper_amazon;
@@ -38,6 +42,9 @@ if( MASTER_WEBSITE == 'amazon' ){
 }else if( MASTER_WEBSITE == 'Flipkart' ){
     scraper_master_website = scraper_flipkart;
     website_category_list_url = flipkart_category_list_url;
+}else if( MASTER_WEBSITE == 'Snapdeal' ){
+    scraper_master_website = scraper_snapdeal;
+    website_category_list_url = snapdeal_category_list_url;
 }
 //*******************************************************************************************************
 //*******************************************************************************************************
@@ -84,6 +91,10 @@ function add_new_catalog_url( website, new_data, callback ){
     }
 }
 function verify_valid_catalog_urls( data,  jquery_path, callback ){
+    console.log("\n");
+    console.log('Waiting Time : 15 Seconds....................');
+    GENERIC.wait(15000);
+    console.log("\n");
     console.log( "---------------------------------------------------------------------Total Urls Pending To Check  :: " + data.length );
     if( data.length == 0 ){
         callback('0 Urls left to check hence callback is called');
@@ -125,7 +136,13 @@ function verify_valid_catalog_urls( data,  jquery_path, callback ){
                     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
                     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
                     
-                    if( typeof response_data.url_level != 'undefined' && response_data.url_level == 0 ){
+                    
+                    var CONFIG_LAST_LEVEL_CHECK = 0;
+                    if( MASTER_WEBSITE  == 'Snapdeal'){
+                        CONFIG_LAST_LEVEL_CHECK = 1;
+                    }
+                    
+                    if( typeof response_data.url_level != 'undefined' && response_data.url_level <= CONFIG_LAST_LEVEL_CHECK ){
                         if( typeof response_data.all_urls != 'undefined' ){
                             all_urls = response_data.all_urls;
                             if( all_urls.length > 0 ){

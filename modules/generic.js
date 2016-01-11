@@ -1,6 +1,13 @@
 var urlMod = require('url');
 var querystring = require('querystring');
 module.exports = {
+    wait : function(ms){
+        var start = new Date().getTime();
+        var end = start;
+        while(end < start + ms) {
+          end = new Date().getTime();
+       }
+     },
     stringToArray: function(str, expby) {
         var ret = new Array();
         var split = str.split(expby);

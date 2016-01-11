@@ -7,7 +7,7 @@ var conn_catalog_urls = require('../models/catalog_urls');
 var conn_website_scrap_data = require('../models/website_scrap_data');
 var _ = require('underscore');
 //*******************************************************************************************************
-var master_website_list = ['amazon','Flipkart','snapdeal','paytm','shopclues'];
+var master_website_list = ['amazon','Flipkart','Snapdeal','paytm','shopclues'];
 var MASTER_WEBSITE = false;
 var args = process.argv.slice(2);
 if (args.length == 0) {
@@ -27,6 +27,7 @@ console.log('Master Website :: '+ MASTER_WEBSITE);
 //*******************************************************************************************************
 var scraper_amazon = require('../website_scraper/amazon');
 var scraper_flipkart = require('../website_scraper/flipkart');
+var scraper_snapdeal = require('../website_scraper/snapdeal');
 //*******************************************************************************************************
 var jquery_path = '../public/js/jquery-1.8.3.min.js';
 
@@ -43,6 +44,8 @@ function get_website_scraper_object( website ){
         return scraper_flipkart;
     }else if( website == 'amazon'){
         return scraper_amazon;
+    }else if( website == 'Snapdeal'){
+        return scraper_snapdeal;
     }
     return false;
 }
@@ -112,6 +115,14 @@ function update_scrap_stats( rec_id, type, callback  ){
 
 
 function add_update_product( u_rec_id, website, website_category, new_data, callback ){
+    if( typeof new_data.href == 'undefined' || typeof new_data.price == 'undefined' || typeof new_data.name == 'undefined' || 
+        new_data.href == '' || new_data.name == ''    ){
+        //console.log( new_data );
+        //console.log('*********************');
+        //process.exit(0);
+        callback('Product Info Issue');
+    }
+    
     new_data.website = website;
     new_data.website_category = website_category;
     var url = new_data.href;
@@ -252,7 +263,15 @@ function insert_or_update_products( u_rec_id, website, website_category, scraped
 }
 
 
+
 function process_pagination_urls( u_rec_id, website, website_category, urls, count_process, callback ){
+    console.log("\n");
+    console.log("\n");
+    console.log('Waiting Time : 15 Seconds....................');
+    console.log("\n");
+    console.log("\n");
+    GENERIC.wait(15000);
+    
     console.log( "-------------------------------------------------------------------------------------------------------------------------------");
     console.log( "---------------------------------------------------------------------STEP :: Start Processing Pagination Urls ");
     console.log( "---------------------------------------------------------------------website ::  " + website);

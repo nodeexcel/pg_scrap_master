@@ -1,5 +1,5 @@
 var generic_function = require('./generic');
-
+var fs = require('fs');
 var scrap_catalog = {
     getUnique : function( website, div ){
         ret = '';
@@ -22,7 +22,6 @@ var scrap_catalog = {
         return ret;
     },
     getName: function(website, div) {
-    
         var ret_name = '';
         if (website.indexOf('exclusively') != -1) {
             ret_name =  div.find('h3.product-name').find('a').attr('title');
@@ -53,8 +52,11 @@ var scrap_catalog = {
             brand = div.find('div.brand').text();
             name = div.find('div.product').text();
             ret_name= brand + ' ' + name;
-        } else if (website.indexOf('snapdeal') != -1) {
-            ret_name= div.find('.product-title').find('a.prodLink').text();
+        } else if (website.indexOf('snapdeal') != -1 || website.indexOf('Snapdeal') != -1) {
+            if( div.find('p.product-title').length > 0 ){
+                ret_name = div.find('p.product-title').text();
+            }
+            //ret_name= div.find('.product-title').find('a.prodLink').text();
         } else if (website.indexOf('zovi') != -1) {
             ret_name= div.find('.title').text();
         } else if (website.indexOf('fashionara') != -1) {
@@ -147,8 +149,11 @@ var scrap_catalog = {
     },
     getPriceText: function (website, div) {
         var return_price_text = '';
-        if( website.indexOf('snapdeal') != -1 ){
-            return_price_text =  div.find('.product-price').find('p').first().text();
+        if( website.indexOf('snapdeal') != -1 || website.indexOf('Snapdeal') != -1 ){
+            if( div.find('div.product-price-row').find('span.product-price').length > 0 ){
+                return_price_text =  div.find('div.product-price-row').find('span.product-price').text();
+            }
+            //return_price_text =  div.find('.product-price').find('p').first().text();
         }
         else if( website.indexOf('perniaspopupshop') != -1 ){
             if( div.find('span.price').length > 0 ){
@@ -458,8 +463,17 @@ var scrap_catalog = {
                 ret = div.find('img.s-access-image').attr('src');
             }
         }
-        else if (website.indexOf('snapdeal') != -1) {
-            ret = div.find('img.gridViewImage').attr('src');
+        else if (website.indexOf('snapdeal') != -1 || website.indexOf('Snapdeal') != -1) {
+            if( div.find('img.product-image').length > 0 ){
+                ret = div.find('img.product-image').attr('src');
+                if( typeof ret == 'undefined' || ret == ''){
+                    ret = div.find('img.product-image').attr('lazySrc');
+                }
+                if( typeof ret == 'undefined' || ret == ''){
+                    ret = div.find('img.product-image').attr('lazysrc');
+                }
+            }
+            //ret = div.find('img.gridViewImage').attr('src');
         }
         else if (website.indexOf('fabindia') != -1) {
             ret = div.find('a.product-image').find('img').attr('src');
@@ -560,8 +574,11 @@ var scrap_catalog = {
         return ret;
     },
     getHref: function (website, div) {
-        if (website.indexOf('snapdeal') != -1) {
-            return div.find('.product-title').find('a.prodLink').attr('href');
+        if (website.indexOf('snapdeal') != -1 || website.indexOf('Snapdeal') != -1 ) {
+            if( div.find('div.product-tuple-description').find('a').length > 0 ){
+              return div.find('div.product-tuple-description').find('a').attr('href');
+            }
+            //return div.find('.product-title').find('a.prodLink').attr('href');
         }
         else if (website.indexOf('elitify') != -1) {
             var href = div.find('a').attr('href');
@@ -1092,9 +1109,6 @@ var scrap_catalog = {
                     }
                 })
             }
-            console.log(brands);
-            console.log('asdasdasd');
-            process.exit(0);
         }
         else if (website.indexOf('zivame') != -1) {
             var regBr = /\([0-9]+\)/;
