@@ -23,7 +23,11 @@ var scrap_catalog = {
     },
     getName: function(website, div) {
         var ret_name = '';
-        if (website.indexOf('paytm') != -1) {
+        if (website.indexOf('shopclues') != -1) {
+            if( typeof div.find('a.name').attr('title') != 'undefined'){
+                ret_name = div.find('a.name').attr('title');
+            }
+        }else if (website.indexOf('paytm') != -1) {
             if( typeof div['name'] != 'undefined' && div['name'] != ''){
                 ret_name = div['name'];
             }
@@ -153,7 +157,19 @@ var scrap_catalog = {
     },
     getPriceText: function (website, div) {
         var return_price_text = '';
-        if (website.indexOf('paytm') != -1) {
+        if (website.indexOf('shopclues') != -1) {
+            p_text = '';
+            if( div.find('div.product-price').find('span.price').length > 0 ){
+                p_text = div.find('div.product-price').find('span.price').text();
+                if (p_text.indexOf('-') != -1) {
+                    explode = generic_function.stringToArray(p_text, '-');
+                    if (explode.length > 0) {
+                        p_text = explode[0];
+                    }
+                }
+            }
+            return_price_text =  p_text;
+        }else if (website.indexOf('paytm') != -1) {
             if( typeof div['offer_price'] != 'undefined' && div['offer_price'] != ''){
                 return_price_text = div['offer_price'];
             }
@@ -470,7 +486,11 @@ var scrap_catalog = {
     },
     getImage: function(website, div) {
         var ret = '';
-        if (website.indexOf('paytm') != -1) {
+        if (website.indexOf('shopclues') != -1) {
+            if( div.find('img').length ){
+                ret = div.find('img').attr('src2');
+            }
+        }else if (website.indexOf('paytm') != -1) {
             if( typeof div['image_url'] != 'undefined' && div['image_url'] != ''){
                 ret = div['image_url'];
             }
@@ -590,7 +610,15 @@ var scrap_catalog = {
         return ret;
     },
     getHref: function (website, div) {
-        if (website.indexOf('paytm') != -1) {
+        if (website.indexOf('shopclues') != -1) {
+            if( div.find('a.name').length ){
+                href = div.find('a.name').attr('href');
+                if( href.indexOf('shopclues.com') == -1 ){
+                    href = "http://www.shopclues.com" +  href;
+                }
+                return href;
+            }
+        }else if (website.indexOf('paytm') != -1) {
             if( typeof div['seourl'] != 'undefined' && div['seourl'] != ''){
                 seo_url = div['seourl'];
                 href = 'https://paytm.com/shop/p/'+generic_function.getLastSlash(seo_url);
