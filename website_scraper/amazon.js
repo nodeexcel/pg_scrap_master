@@ -13,6 +13,7 @@ module.exports = {
             }else{
                 var products = [];
                 jQuery = cheerio.load( response_data );
+                
                 if( jQuery('.s-result-list').find('li').length > 0 ){
                     jQuery('.s-result-list').find('li').each( function(){
                         

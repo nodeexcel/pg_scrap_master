@@ -28,6 +28,7 @@ console.log('Master Website :: '+ MASTER_WEBSITE);
 var scraper_amazon = require('../website_scraper/amazon');
 var scraper_flipkart = require('../website_scraper/flipkart');
 var scraper_snapdeal = require('../website_scraper/snapdeal');
+var scraper_paytm = require('../website_scraper/paytm');
 //*******************************************************************************************************
 var jquery_path = '../public/js/jquery-1.8.3.min.js';
 
@@ -46,6 +47,8 @@ function get_website_scraper_object( website ){
         return scraper_amazon;
     }else if( website == 'Snapdeal'){
         return scraper_snapdeal;
+    }else if( website == 'paytm'){
+        return scraper_paytm;
     }
     return false;
 }

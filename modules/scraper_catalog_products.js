@@ -23,7 +23,11 @@ var scrap_catalog = {
     },
     getName: function(website, div) {
         var ret_name = '';
-        if (website.indexOf('exclusively') != -1) {
+        if (website.indexOf('paytm') != -1) {
+            if( typeof div['name'] != 'undefined' && div['name'] != ''){
+                ret_name = div['name'];
+            }
+        }else if (website.indexOf('exclusively') != -1) {
             ret_name =  div.find('h3.product-name').find('a').attr('title');
         }
         else if (website.indexOf('elitify') != -1) {
@@ -149,7 +153,15 @@ var scrap_catalog = {
     },
     getPriceText: function (website, div) {
         var return_price_text = '';
-        if( website.indexOf('snapdeal') != -1 || website.indexOf('Snapdeal') != -1 ){
+        if (website.indexOf('paytm') != -1) {
+            if( typeof div['offer_price'] != 'undefined' && div['offer_price'] != ''){
+                return_price_text = div['offer_price'];
+            }
+            if( return_price_text == '' && typeof div['actual_price'] != 'undefined' && div['actual_price'] != ''){
+                return_price_text = div['actual_price'];
+            }
+            return_price_text = return_price_text.toString();
+        }else if( website.indexOf('snapdeal') != -1 || website.indexOf('Snapdeal') != -1 ){
             if( div.find('div.product-price-row').find('span.product-price').length > 0 ){
                 return_price_text =  div.find('div.product-price-row').find('span.product-price').text();
             }
@@ -458,7 +470,11 @@ var scrap_catalog = {
     },
     getImage: function(website, div) {
         var ret = '';
-        if (website.indexOf('amazon') != -1) {
+        if (website.indexOf('paytm') != -1) {
+            if( typeof div['image_url'] != 'undefined' && div['image_url'] != ''){
+                ret = div['image_url'];
+            }
+        }else if (website.indexOf('amazon') != -1) {
             if( div.find('img.s-access-image').length ){
                 ret = div.find('img.s-access-image').attr('src');
             }
@@ -574,7 +590,13 @@ var scrap_catalog = {
         return ret;
     },
     getHref: function (website, div) {
-        if (website.indexOf('snapdeal') != -1 || website.indexOf('Snapdeal') != -1 ) {
+        if (website.indexOf('paytm') != -1) {
+            if( typeof div['seourl'] != 'undefined' && div['seourl'] != ''){
+                seo_url = div['seourl'];
+                href = 'https://paytm.com/shop/p/'+generic_function.getLastSlash(seo_url);
+                return href;
+            }
+        }else if (website.indexOf('snapdeal') != -1 || website.indexOf('Snapdeal') != -1 ) {
             if( div.find('div.product-tuple-description').find('a').length > 0 ){
               return div.find('div.product-tuple-description').find('a').attr('href');
             }

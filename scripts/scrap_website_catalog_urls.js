@@ -31,10 +31,12 @@ var GENERIC = require('../modules/generic');
 var scraper_amazon = require('../website_scraper/amazon');
 var scraper_flipkart = require('../website_scraper/flipkart');
 var scraper_snapdeal = require('../website_scraper/snapdeal');
+var scraper_paytm = require('../website_scraper/paytm');
 
 var amazon_category_list_url = "http://www.amazon.in/gp/site-directory/ref=nav_shopall_btn";
 var flipkart_category_list_url = "http://www.flipkart.com/xhr/getNewMenuHtml";
 var snapdeal_category_list_url = "http://www.snapdeal.com/page/sitemap";
+var paytm_category_list_url = "https://catalog.paytm.com/v1//web/menu?channel=web&version=2";
 
 if( MASTER_WEBSITE == 'amazon' ){
     scraper_master_website = scraper_amazon;
@@ -45,6 +47,9 @@ if( MASTER_WEBSITE == 'amazon' ){
 }else if( MASTER_WEBSITE == 'Snapdeal' ){
     scraper_master_website = scraper_snapdeal;
     website_category_list_url = snapdeal_category_list_url;
+}else if( MASTER_WEBSITE == 'paytm' ){
+    scraper_master_website = scraper_paytm;
+    website_category_list_url = paytm_category_list_url;
 }
 //*******************************************************************************************************
 //*******************************************************************************************************
