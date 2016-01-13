@@ -27,6 +27,11 @@ var scrap_catalog = {
             if( typeof div.find('a.name').attr('title') != 'undefined'){
                 ret_name = div.find('a.name').attr('title');
             }
+            if( ret_name == '' ){
+                if( div.find('img').attr('title').length ){
+                    ret_name = div.find('img').attr('title');
+                }
+            }
         }else if (website.indexOf('paytm') != -1) {
             if( typeof div['name'] != 'undefined' && div['name'] != ''){
                 ret_name = div['name'];

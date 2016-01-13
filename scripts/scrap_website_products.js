@@ -121,6 +121,15 @@ function update_scrap_stats( rec_id, type, callback  ){
 
 
 function add_update_product( u_rec_id, website, website_category, new_data, callback ){
+    console.log('------------------------------------------------------------------------------');
+    console.log('------------------------------------------------------------------------------');
+    console.log('--------PRODUCT  :: add_update_product ::: START' );
+    console.log('------------------------------------------------------------------------------');
+    console.log('------------------------------------------------------------------------------');
+    console.log( new_data );
+    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
+    
+    
     if( typeof new_data.href == 'undefined' || typeof new_data.price == 'undefined' || typeof new_data.name == 'undefined' || 
         new_data.href == '' || new_data.name == ''    ){
         //console.log( new_data );
@@ -182,8 +191,10 @@ function add_update_product( u_rec_id, website, website_category, new_data, call
     
     //console.log( where );
     
-    
-    //console.log( product_info );
+    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
+    console.log( where );
+    console.log( product_info );
+    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
     //process.exit(0);
     
     
@@ -192,6 +203,13 @@ function add_update_product( u_rec_id, website, website_category, new_data, call
             callback('Error Occurs');
         }else{
             if( typeof result == 'undefined' || result.length == 0 ){
+                if( new_data.price != '' && new_data.price > 0 ){
+                    product_info['price_history'] = [{
+                        date: PARSER.currentDate(),
+                        timestamp: PARSER.currentTimestamp(),
+                        price: new_data.price*1
+                    }];
+                }
                 var insert_new_product  = new conn_website_scrap_data( product_info );
                 insert_new_product.save( function(){
                     update_scrap_stats( u_rec_id, 'insert', function( aa ){
@@ -206,19 +224,49 @@ function add_update_product( u_rec_id, website, website_category, new_data, call
                 if (typeof price_history == 'undefined' || !price_history || price_history == null) {
                     price_history = [];
                 }
-                //if( exist_date == 'undefined' || (exist_date == PARSER.currentDate ) ){
-                if( exist_date == 'undefined' || ( exist_date.toString() != PARSER.currentDate().toString()  ) ){
-                    if( new_data.price != '' && new_data.price > 0){ 
+                
+                if( new_data.price != '' && new_data.price > 0 ){
+                    var is_new_date_price = true;
+                    if( price_history.length == 0){
+                    }else{
+                        for( var d in price_history ){
+                            dd = price_history[d];
+                            if( dd['date'] ==  PARSER.currentDate() ){
+                                is_new_date_price = false;
+                                price_history[d]['date'] = PARSER.currentDate();
+                                price_history[d]['timestamp'] = PARSER.currentTimestamp();
+                                price_history[d]['price'] = new_data.price*1;
+                            }
+                        }
+                    }
+                    if( is_new_date_price == true ){
                         price_history.push({
                             date: PARSER.currentDate(),
                             timestamp: PARSER.currentTimestamp(),
                             price: new_data.price*1
                         });
-                        if (price_history.length > 30) {
-                            price_history.shift();
-                        }
+                    }
+                    if (price_history.length > 30) {
+                        price_history.shift();
                     }
                 }
+                
+                
+                
+                
+//                //if( exist_date == 'undefined' || (exist_date == PARSER.currentDate ) ){
+//                if( exist_date == 'undefined' || ( exist_date.toString() != PARSER.currentDate().toString()  ) ){
+//                    if( new_data.price != '' && new_data.price > 0){ 
+//                        price_history.push({
+//                            date: PARSER.currentDate(),
+//                            timestamp: PARSER.currentTimestamp(),
+//                            price: new_data.price*1
+//                        });
+//                        if (price_history.length > 30) {
+//                            price_history.shift();
+//                        }
+//                    }
+//                }
                 to_be_update_data = {
                     date_of_birth : PARSER.currentIsoDate(),
                     price : new_data.price,
@@ -262,7 +310,8 @@ function insert_or_update_products( u_rec_id, website, website_category, scraped
         product = scraped_products[0];
         
         scraped_products.splice(0, 1); //remove first product
-        add_update_product( u_rec_id, website, website_category, product, function(){
+        add_update_product( u_rec_id, website, website_category, product, function( info ){
+            console.log( info );
             insert_or_update_products( u_rec_id, website, website_category, scraped_products, callback );
         })
     }
@@ -271,12 +320,6 @@ function insert_or_update_products( u_rec_id, website, website_category, scraped
 
 
 function process_pagination_urls( u_rec_id, website, website_category, urls, count_process, callback ){
-    console.log("\n");
-    console.log("\n");
-    console.log('Waiting Time : 15 Seconds....................');
-    console.log("\n");
-    console.log("\n");
-    GENERIC.wait(15000);
     
     console.log( "-------------------------------------------------------------------------------------------------------------------------------");
     console.log( "---------------------------------------------------------------------STEP :: Start Processing Pagination Urls ");
@@ -286,6 +329,15 @@ function process_pagination_urls( u_rec_id, website, website_category, urls, cou
     
     console.log( "---------------------------------------------------------------------At A Time Pagination Urls Process Count:: " + count_process );
     console.log(urls);
+    
+    console.log("\n");
+    console.log("\n");
+    console.log('Waiting Time : 15 Seconds....................');
+    console.log("\n");
+    console.log("\n");
+    GENERIC.wait(15000);
+    
+    
     
     if( urls.length == 0){
         callback('0  pagination urls remains hence callback called');
@@ -346,10 +398,10 @@ function start_scrapping( pending_catalog_urls ){
         //process.exit(0);
     }else{
         var to_be_scrap = false;
-        if( typeof pending_catalog_urls[0] != 'undefined' ){
+        //if( typeof pending_catalog_urls[0] != 'undefined' ){
             to_be_scrap = pending_catalog_urls[0];
             pending_catalog_urls.splice(0, 1); // remove the url from pending_catalog_urls list
-        }
+        //}
         if( to_be_scrap == false ){
         }else{
             console.log( "---------------------------------------------------------------------Pending url going to process is below ");
@@ -403,7 +455,7 @@ function start_scrapping( pending_catalog_urls ){
 
 function initiateScrapping(){
 //    w = {
-//        '_id' : '56837db661baea5d13dbf9f5'
+//        '_id' : '568d0dd1e00731444f23ba94'
 //    }
     w = {
             'website' : MASTER_WEBSITE ,
