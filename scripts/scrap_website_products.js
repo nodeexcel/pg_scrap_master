@@ -39,7 +39,7 @@ var GENERIC = require('../modules/generic');
 var date = require('date-and-time');
 
 var CONFIG_scrap_number_of_pagination = 5; // total number og pages to scrap per catalog url, set 0 for all i.e to scrap all pagination pages
-var CONFIG_scrap_pages_at_a_time = 1; // number of urls to scrap at a time
+var CONFIG_scrap_pages_at_a_time = 1; // number of urls to scrap at a time // keep this 1 always
 
 function get_website_scraper_object( website ){
     if( website == 'Flipkart'){
@@ -63,6 +63,8 @@ function update_scrap_stats( rec_id, type, callback  ){
     }
     conn_catalog_urls.findOne( where, function( err, result){
         if( typeof result == 'undefined' || result.length == 0 ){
+            callback('record not found');
+            return true;
         }else{
             var today_date = PARSER.currentDate();
             
@@ -111,8 +113,10 @@ function update_scrap_stats( rec_id, type, callback  ){
             }, function (err, res){
                 if( err ){
                     callback('error');
+                    return true;
                 }else{
                     callback('success');
+                    return true;
                 }
             });
         }
@@ -121,23 +125,17 @@ function update_scrap_stats( rec_id, type, callback  ){
 
 
 function add_update_product( u_rec_id, website, website_category, new_data, callback ){
-    console.log('------------------------------------------------------------------------------');
+    console.log('\n');
+    console.log('\n');
     console.log('------------------------------------------------------------------------------');
     console.log('--------PRODUCT  :: add_update_product ::: START' );
     console.log('------------------------------------------------------------------------------');
-    console.log('------------------------------------------------------------------------------');
     console.log( new_data );
-    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
-    
-    
-    if( typeof new_data.href == 'undefined' || typeof new_data.price == 'undefined' || typeof new_data.name == 'undefined' || 
-        new_data.href == '' || new_data.name == ''    ){
-        //console.log( new_data );
-        //console.log('*********************');
-        //process.exit(0);
+    console.log('------------------------------------------------------------------------------');
+    if( typeof new_data.href == 'undefined' || typeof new_data.price == 'undefined' || typeof new_data.name == 'undefined' || new_data.href == '' || new_data.name == ''    ){
         callback('Product Info Issue');
+        return true;
     }
-    
     new_data.website = website;
     new_data.website_category = website_category;
     var url = new_data.href;
@@ -148,84 +146,83 @@ function add_update_product( u_rec_id, website, website_category, new_data, call
         unique = GENERIC.getUniqueCode( website, url );
     }
     new_data.unique = unique;
-    
-    
     new_data.date_of_birth = PARSER.currentIsoDate();
     new_data.time = PARSER.currentTimestamp();
     new_data.time_pretty = PARSER.currentIsoDate();
-    
     new_data.date = PARSER.currentDate();
-    
-    
     new_data.scrap_source = 'pg_scrap_master';
-    
-    
     //console.log( new_data.price);
-    
     if( typeof new_data.price != 'undefined' && new_data.price != '' ){
         new_data.price = GENERIC.getCleanNumber( new_data.price );
         if( new_data.price != 'undefined' && new_data.price != '' && new_data.price > 0 ){
             new_data.price = new_data.price * 1;
         }
     }
-    
     if( new_data.price == 0 || new_data.price == '' || new_data.price == 'undefined' ){
         callback('Error Price Issue');
+        return true;
     }
-    
-    //console.log( new_data.price);
-    //console.log('*******************************');
-    
-    
-    //console.log('-----');
-    //console.log( new_data );
-    //process.exit(0);
-    
     where = {
         website : website,
         unique : unique
     }
-    
-    
     var product_info = new_data;
-    
-    //console.log( where );
-    
-    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
+    console.log('------------------------------------------------------------------------------');
     console.log( where );
+    console.log('------------------------------------------------------------------------------');
     console.log( product_info );
-    console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
-    //process.exit(0);
-    
+    console.log('------------------------------------------------------------------------------');
+    console.log('------------------------------------------------------------------------------');
     
     conn_website_scrap_data.find( where, function( err, result ){
         if( err ){
             callback('Error Occurs');
+            return true;
         }else{
             if( typeof result == 'undefined' || result.length == 0 ){
+                console.log('Product Not Exists');
                 if( new_data.price != '' && new_data.price > 0 ){
                     product_info['price_history'] = [{
                         date: PARSER.currentDate(),
                         timestamp: PARSER.currentTimestamp(),
                         price: new_data.price*1
                     }];
+                    price_log_text = PARSER.currentDate()+'__'+PARSER.currentDateTimeDay()+'____'+new_data.price;
+                    product_info['price_log'] = [price_log_text];
                 }
+                console.log("\n");
+                console.log('Going To Insert');
+                console.log( product_info );
                 var insert_new_product  = new conn_website_scrap_data( product_info );
                 insert_new_product.save( function(){
                     update_scrap_stats( u_rec_id, 'insert', function( aa ){
                         console.log('1 INSERT :: '+aa);
                         callback('Products Inserted');
+                        return true;
                     });
                 })
             }else{
+                console.log('Product Already Exists');
                 exist_product = result[0];
+                console.log('-----------------------------exist product-------------------------------------------------');
+                console.log( exist_product );
+                console.log('--------------------------------------------------------------------------------------------------');
+                console.log( exist_product );
+                
                 var exist_date = exist_product.get('date');
                 var price_history = exist_product.get('price_history');
                 if (typeof price_history == 'undefined' || !price_history || price_history == null) {
                     price_history = [];
                 }
+                var price_log = exist_product.get('price_log');
+                if (typeof price_log == 'undefined' || !price_log || price_log == null) {
+                    price_log = [];
+                }
                 
                 if( new_data.price != '' && new_data.price > 0 ){
+                    price_log_text = PARSER.currentDate()+'__'+PARSER.currentDateTimeDay()+'____'+new_data.price;
+                    price_log.push( price_log_text );
+                    
                     var is_new_date_price = true;
                     if( price_history.length == 0){
                     }else{
@@ -249,40 +246,32 @@ function add_update_product( u_rec_id, website, website_category, new_data, call
                     if (price_history.length > 30) {
                         price_history.shift();
                     }
+                    if (price_log.length > 20) {
+                        price_log.shift();
+                    }
                 }
-                
-                
-                
-                
-//                //if( exist_date == 'undefined' || (exist_date == PARSER.currentDate ) ){
-//                if( exist_date == 'undefined' || ( exist_date.toString() != PARSER.currentDate().toString()  ) ){
-//                    if( new_data.price != '' && new_data.price > 0){ 
-//                        price_history.push({
-//                            date: PARSER.currentDate(),
-//                            timestamp: PARSER.currentTimestamp(),
-//                            price: new_data.price*1
-//                        });
-//                        if (price_history.length > 30) {
-//                            price_history.shift();
-//                        }
-//                    }
-//                }
                 to_be_update_data = {
                     date_of_birth : PARSER.currentIsoDate(),
                     price : new_data.price,
                     price_history: price_history,
+                    price_log : price_log,
                     updated: 1,
                     time: PARSER.currentTimestamp(),
                     time_pretty: PARSER.currentIsoDate(),
                     date: PARSER.currentDate(),
                 };
+                console.log("\n");
+                console.log('Going To Update');
+                console.log( to_be_update_data );
                 conn_website_scrap_data.update(where,{'$set' : to_be_update_data}, function (err, res) {
                     if( err ){
                         callback('Products Updated');
+                        return true;
                     }else{
                         update_scrap_stats( u_rec_id, 'update', function( aa ){
                             console.log('1 UPdated :: '+aa);
                             callback('Products Updated');
+                            return true;
                         });
                     }
                 });
@@ -306,12 +295,15 @@ function insert_or_update_products( u_rec_id, website, website_category, scraped
     console.log( "---------------------------------------------------------------------Products Remaining For Insert & Update  :: " + scraped_products.length );
     if( scraped_products.length ==  0 ){
         callback('0 Scrapped Products Remaining Hence Callback Called');
+        return true;
     }else{
         product = scraped_products[0];
         
         scraped_products.splice(0, 1); //remove first product
         add_update_product( u_rec_id, website, website_category, product, function( info ){
             console.log( info );
+            console.log('\n');
+            console.log('\n');
             insert_or_update_products( u_rec_id, website, website_category, scraped_products, callback );
         })
     }
@@ -341,6 +333,7 @@ function process_pagination_urls( u_rec_id, website, website_category, urls, cou
     
     if( urls.length == 0){
         callback('0  pagination urls remains hence callback called');
+        return true;
     }else{
         var page_urls = [];
         _.each( urls, function( u, key ){
@@ -455,7 +448,7 @@ function start_scrapping( pending_catalog_urls ){
 
 function initiateScrapping(){
 //    w = {
-//        '_id' : '568d0dd1e00731444f23ba94'
+//        '_id' : '568d0d09e00731444f23ba4c'
 //    }
     w = {
             'website' : MASTER_WEBSITE ,
