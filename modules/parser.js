@@ -60,7 +60,8 @@ module.exports = {
     },
     currentDate:function(){
         var now = new Date();
-        return date.format(now, 'YYYY-MM-DD');  
+        ret = date.format(now, 'YYYY-M-D');  
+        return ret;
     },
     currentDateTimeDay:function(){
         var now = new Date();
