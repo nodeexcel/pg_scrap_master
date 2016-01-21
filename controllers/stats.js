@@ -17,11 +17,11 @@ exports.getStats = function(req, res) {
     }
     var stat_dates = [];
 var now = new Date();
-today_date = date.format( now, 'YYYY-MM-DD' );
+today_date = date.format( now, 'YYYY-M-DD' );
 
 for( var i = 10; i >=1; i-- ){
     d = date.addDays(now, -i);
-    d = date.format( d, 'YYYY-MM-DD' );
+    d = date.format( d, 'YYYY-M-DD' );
     stat_dates.push( d );
 }
 stat_dates.push( today_date );
