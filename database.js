@@ -6,7 +6,9 @@ var mongoose = require('mongoose')
 
 var conn_pg_scrap_db1 = mongoose.createConnection('mongodb://127.0.0.1/scrap_db1');
 var conn_pg_scrap_db2 = mongoose.createConnection('mongodb://127.0.0.1/scrap_db2');
-var conn_fiq_scrap_db3 = mongoose.createConnection('mongodb://144.76.83.246/scrap_db3');
+
+//var conn_fiq_scrap_db3 = mongoose.createConnection('mongodb://144.76.83.246/scrap_db3');
+var conn_fiq_scrap_db3 = mongoose.createConnection('mongodb://127.0.0.1/scrap_db3');
 
 
 var schema_db1_website_scrap_data = mongoose.Schema({}, {

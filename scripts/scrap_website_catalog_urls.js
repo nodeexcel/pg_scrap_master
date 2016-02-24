@@ -1,9 +1,20 @@
 var express = require('express');
 var router = express.Router();
 var _ = require('underscore');
+var mongoose = require('mongoose')
+//*******************************************************************************************************
+//*******************************************************************************************************
+var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
+
+var schema_catalog_urls = mongoose.Schema({}, {
+    strict: false,
+    collection: 'catalog_urls'
+});
+var conn_catalog_urls = conn_pg_catalog_urls.model('catalog_urls', schema_catalog_urls);
 
 //*******************************************************************************************************
-//*******************************************************************************************************
+
+
 var master_website_list = ['amazon','Flipkart','Snapdeal','paytm','shopclues'];
 var MASTER_WEBSITE = false;
 var args = process.argv.slice(2);
@@ -23,7 +34,8 @@ if (args.length == 0) {
 console.log('Master Website :: '+ MASTER_WEBSITE);
 //*******************************************************************************************************
 //*******************************************************************************************************
-var conn_catalog_urls = require('../models/catalog_urls');
+//*******************************************************************************************************
+
 var jquery_path = '../public/js/jquery-1.8.3.min.js';
 
 var GENERIC = require('../modules/generic');

@@ -1,4 +1,14 @@
-var conn_catalog_urls = require('../models/catalog_urls');
+//var conn_catalog_urls = require('../models/catalog_urls');
+var mongoose = require('mongoose');
+
+var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
+
+var schema_catalog_urls = mongoose.Schema({}, {
+    strict: false,
+    collection: 'catalog_urls'
+});
+var conn_catalog_urls = conn_pg_catalog_urls.model('catalog_urls', schema_catalog_urls);
+
 
 var date = require('date-and-time');
 
@@ -17,11 +27,11 @@ exports.getStats = function(req, res) {
     }
     var stat_dates = [];
 var now = new Date();
-today_date = date.format( now, 'YYYY-M-DD' );
+today_date = date.format( now, 'YYYY-M-D' );
 
 for( var i = 10; i >=1; i-- ){
     d = date.addDays(now, -i);
-    d = date.format( d, 'YYYY-M-DD' );
+    d = date.format( d, 'YYYY-M-D' );
     stat_dates.push( d );
 }
 stat_dates.push( today_date );
