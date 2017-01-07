@@ -8,6 +8,9 @@ Scraping master for amazon, flipkart, snapdeal, paytm, shopclues e-commerce webs
 ## Run express app to view stats ##
 ```node bin/www```
 
+## View Scraping Stats ##
+```localhost:3001/stats```
+
 ## To start scraping website catalog urls  ##
 ```node scrap_website_catalog_urls.js amazon```
 
