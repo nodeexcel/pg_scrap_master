@@ -5,7 +5,6 @@ var mongoose = require('mongoose')
 //*******************************************************************************************************
 //*******************************************************************************************************
 var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
-
 var schema_catalog_urls = mongoose.Schema({}, {
     strict: false,
     collection: 'catalog_urls'
@@ -13,8 +12,6 @@ var schema_catalog_urls = mongoose.Schema({}, {
 var conn_catalog_urls = conn_pg_catalog_urls.model('catalog_urls', schema_catalog_urls);
 
 //*******************************************************************************************************
-
-
 var master_website_list = ['amazon', 'Flipkart', 'Snapdeal', 'paytm', 'shopclues'];
 var MASTER_WEBSITE = false;
 var args = process.argv.slice(2);
@@ -37,7 +34,6 @@ console.log('Master Website :: ' + MASTER_WEBSITE);
 //*******************************************************************************************************
 
 var jquery_path = '../public/js/jquery-1.8.3.min.js';
-
 var GENERIC = require('../modules/generic');
 
 var scraper_amazon = require('../website_scraper/amazon');
@@ -75,7 +71,6 @@ function add_new_catalog_url(website, new_data, callback) {
     console.log("---------------------------------------------------------------------New Catalog Url Will Be Insert");
     var new_url = new_data.url;
     new_url = new_url.trim();
-
     var new_url_text = new_data.url_text;
     new_url_text = new_url_text.trim();
 
@@ -86,7 +81,6 @@ function add_new_catalog_url(website, new_data, callback) {
         where = {
             website: website,
             url: new_url
-                    //url_text : new_url_text
         }
         conn_catalog_urls.find(where, function (err, result) {
             if (err) {
@@ -123,15 +117,12 @@ function verify_valid_catalog_urls(data, jquery_path, callback) {
     } else {
         url_data = data[0];
         data.splice(0, 1); //remove first item
-
         var url = url_data.url;
         var url_text = url_data.text;
         var url_check_level = url_data.check_level;
-
         console.log("---------------------------------------------------------------------Checking Url Check Level :: " + url_check_level);
         console.log("---------------------------------------------------------------------Checking Url :: " + url);
         console.log("---------------------------------------------------------------------Checking Url Text :: " + url_text);
-
         scraper_master_website.analyse_catalog_url(url_check_level, url, url_text, jquery_path, function (response_type, response_data) {
             console.log("---------------------------------------------------------------------Checking Response :: " + response_type);
             if (response_type == 'error') {
@@ -157,13 +148,10 @@ function verify_valid_catalog_urls(data, jquery_path, callback) {
                     console.log(data.length);
                     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
                     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-
-
                     var CONFIG_LAST_LEVEL_CHECK = 0;
                     if (MASTER_WEBSITE == 'Snapdeal') {
                         CONFIG_LAST_LEVEL_CHECK = 1;
                     }
-
                     if (typeof response_data.url_level != 'undefined' && response_data.url_level <= CONFIG_LAST_LEVEL_CHECK) {
                         if (typeof response_data.all_urls != 'undefined') {
                             all_urls = response_data.all_urls;
@@ -175,7 +163,6 @@ function verify_valid_catalog_urls(data, jquery_path, callback) {
                                 })
                             }
                         }
-
                         //console.log( response_data );
                         //console.log( url );
                         //console.log( url_text );
@@ -184,7 +171,6 @@ function verify_valid_catalog_urls(data, jquery_path, callback) {
                     console.log(data.length);
                     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
                     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-
                     console.log('no products found on page');
                     //process.exit(0);
                     verify_valid_catalog_urls(data, jquery_path, callback);
@@ -215,7 +201,5 @@ scraper_master_website.get_catalog_urls(website_category_list_url, jquery_path, 
         }
     }
 });
-
-
 
 module.exports = router;

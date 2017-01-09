@@ -2,11 +2,9 @@ var Spooky = require('spooky');
 var parser_aa = require('../modules/parser');
 var scraper_catalog_products = require('../modules/scraper_catalog_products');
 var cheerio = require('cheerio');
-
 var GENERIC = require('../modules/generic');
-
-
 var module_website = 'shopclues';
+
 module.exports = {
     get_page_products: function (url, callback) {
         parser_aa.get_html(url, function (response_type, response_data) {
@@ -37,7 +35,7 @@ module.exports = {
         })
     },
     analyse_catalog_url: function (url_level, url, url_text, jquery_path, callback) {
-        parser_aa.get_html('http://www.shopclues.com/mobiles/tablets-5.html', function (response_type, response_data) {
+        parser_aa.get_html(url, function (response_type, response_data) {
             if (response_type == 'error') {
                 callback('error', response_data);
             } else {
@@ -48,7 +46,6 @@ module.exports = {
                     jQuery = cheerio.load(response_data);
                     var d_product_count_on_first_page = 0;
                     var d_total_pages = 0;
-
                     if (jQuery('.col3').find('h3').length > 0) {
                         d_product_count_on_first_page = jQuery('.col3').find('h3').length;
                     }
@@ -97,7 +94,6 @@ module.exports = {
     },
     get_catalog_urls: function (url, jquery_path, callback) {
         if (typeof url == 'undefined' || url == '') {
-
         } else {
             parser_aa.get_html(url, function (response_type, response_data) {
                 if (response_type == 'error') {
@@ -131,4 +127,3 @@ module.exports = {
         }
     }
 }
-
