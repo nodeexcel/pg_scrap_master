@@ -8,126 +8,124 @@ var GENERIC = require('../modules/generic');
 
 var module_website = 'shopclues';
 module.exports = {
-    get_page_products : function( url, callback ){
-        parser_aa.get_html( url, function ( response_type, response_data ){
-            if( response_type == 'error' ){
-                callback( 'error', response_data );
-            }else{
+    get_page_products: function (url, callback) {
+        parser_aa.get_html(url, function (response_type, response_data) {
+            if (response_type == 'error') {
+                callback('error', response_data);
+            } else {
                 var products = [];
-                jQuery = cheerio.load( response_data );
-                if( jQuery('div.grid-product').length > 0 ){
-                    jQuery('div.grid-product').each( function(){
-                        unique = scraper_catalog_products.getUnique( module_website, jQuery(this) );
-                        name = scraper_catalog_products.getName( module_website, jQuery(this) );
-                        price = scraper_catalog_products.getPriceText( module_website, jQuery(this) );
-                        image = scraper_catalog_products.getImage( module_website, jQuery(this) );
-                        href = scraper_catalog_products.getHref( module_website, jQuery(this) );
+                jQuery = cheerio.load(response_data);
+                if (jQuery('.col3').length > 0) {
+                    jQuery('.col3').each(function () {
+                        unique = scraper_catalog_products.getUnique(module_website, jQuery(this));
+                        name = scraper_catalog_products.getName(module_website, jQuery(this));
+                        price = scraper_catalog_products.getPriceText(module_website, jQuery(this));
+                        image = scraper_catalog_products.getImage(module_website, jQuery(this));
+                        href = scraper_catalog_products.getHref(module_website, jQuery(this));
                         product = {
-                            name : name,
-                            img : image,
-                            href : href,
-                            price : price,
-                            unique : unique
+                            name: name,
+                            img: image,
+                            href: href,
+                            price: price,
+                            unique: unique
                         }
-                        products.push( product );
+                        products.push(product);
                     });
                 }
-                callback( 'success', products );
+                callback('success', products);
             }
         })
     },
-    analyse_catalog_url: function( url_level, url, url_text, jquery_path, callback ) {
-        parser_aa.get_html( url, function ( response_type, response_data ){
-            if( response_type == 'error'){
-                callback( 'error', response_data );
-            }else{
+    analyse_catalog_url: function (url_level, url, url_text, jquery_path, callback) {
+        parser_aa.get_html('http://www.shopclues.com/mobiles/tablets-5.html', function (response_type, response_data) {
+            if (response_type == 'error') {
+                callback('error', response_data);
+            } else {
                 all_urls = [];
                 pagination_urls = [];
                 sample_pagination_url = ''
-                try{
-                    jQuery = cheerio.load( response_data );
+                try {
+                    jQuery = cheerio.load(response_data);
                     var d_product_count_on_first_page = 0;
                     var d_total_pages = 0;
-                    
-                    if( jQuery('div.grid-product').length > 0 ){
-                        d_product_count_on_first_page = jQuery('div.grid-product').length;
+
+                    if (jQuery('.col3').find('h3').length > 0) {
+                        d_product_count_on_first_page = jQuery('.col3').find('h3').length;
                     }
-                    if( typeof jQuery('#products_count').val() != 'undefined' && jQuery('#total_count_products').val() != 'undefined'){
-                        products_count = jQuery('#products_count').val();
-                        total_count_products = jQuery('#total_count_products').val();
-                        if( products_count != '' &&  total_count_products != ''){
+                    if (typeof jQuery('.col3').find('h3').length != 'undefined') {
+                        products_count = jQuery('.col3').find('h3').length;
+                        total_count_products = jQuery('.col3').find('h3').length;
+                        if (products_count != '' && total_count_products != '') {
                             d_total_pages = total_count_products / products_count;
-                            d_total_pages = d_total_pages *1;
+                            d_total_pages = d_total_pages * 1;
                         }
                     }
-                    if( d_total_pages != 0 ){
+                    if (d_total_pages != 0) {
                         start = 1;
-                        while( start < d_total_pages ){
-                            if( url.indexOf('?') == -1 ){
-                                sample_pagination_url = url+'?page='+start;
-                            }else{
-                                sample_pagination_url = url+'&page='+start;
+                        while (start < d_total_pages) {
+                            if (url.indexOf('?') == -1) {
+                                sample_pagination_url = url + '?page=' + start;
+                            } else {
+                                sample_pagination_url = url + '&page=' + start;
                             }
-                            pagination_urls.push( sample_pagination_url );
+                            pagination_urls.push(sample_pagination_url);
                             start = start + 1;
-                            if( start == 20 ){
+                            if (start == 20) {
                                 start = 1000;
                             }
                         }
                     }
-                    if( pagination_urls.length == 0 && d_product_count_on_first_page > 0 ){
-                        pagination_urls.push( url );
+                    if (pagination_urls.length == 0 && d_product_count_on_first_page > 0) {
+                        pagination_urls.push(url);
                     }
-                    ff =  {
+                    ff = {
                         url_level: url_level,
-                        url : url,
-                        url_text : url_text,
-                        product_count_on_first_page : d_product_count_on_first_page,
-                        total_pages : d_total_pages,
-                        sample_pagination_url : sample_pagination_url,
-                        pagination_urls : pagination_urls,
-                        all_urls : all_urls,
+                        url: url,
+                        url_text: url_text,
+                        product_count_on_first_page: d_product_count_on_first_page,
+                        total_pages: d_total_pages,
+                        sample_pagination_url: sample_pagination_url,
+                        pagination_urls: pagination_urls,
+                        all_urls: all_urls,
                     }
-                    callback( 'success', ff );
-                }catch( err ){
-                    callback( 'error', err );
+                    callback('success', ff);
+                } catch (err) {
+                    callback('error', err);
                 }
             }
         })
     },
-    get_catalog_urls : function( url,jquery_path, callback ) {
-        if( typeof url == 'undefined' || url == ''){
-            
-        }else{
-            parser_aa.get_html( url, function ( response_type, response_data ){
-                console.log( response_type );
-                if( response_type == 'error'){
-                    console.log('s');
-                    callback( 'error', ff );
-                }else{
+    get_catalog_urls: function (url, jquery_path, callback) {
+        if (typeof url == 'undefined' || url == '') {
+
+        } else {
+            parser_aa.get_html(url, function (response_type, response_data) {
+                if (response_type == 'error') {
+                    callback('error', ff);
+                } else {
                     found_urls = [];
-                    jQuery = cheerio.load( response_data );
-                    if( jQuery('#left-pnl').find('a').length > 0 ){
-                        jQuery('#left-pnl').find('a').each( function(){
+                    jQuery = cheerio.load(response_data);
+                    if (jQuery('.scfooter_Category').find('ul').find('li').find('a').length > 0) {
+                        jQuery('.scfooter_Category').find('ul').find('li').find('a').each(function () {
                             link = jQuery(this).attr('href');
-                            if( link.trim() != '' ){
-                                if( link.indexOf('shopclues.com') == -1 ){
+                            if (link.trim() != '') {
+                                if (link.indexOf('shopclues.com') == -1) {
                                     link = 'http://www.shopclues.com' + link;
                                 }
-                                link_text =  jQuery(this).text();
+                                link_text = jQuery(this).text();
                                 link_text = link_text.trim();
                                 row = {
-                                    url : link,
-                                    text : link_text 
+                                    url: link,
+                                    text: link_text
                                 }
-                                found_urls.push( row );
+                                found_urls.push(row);
                             }
                         })
                     }
-                    ff =  {
-                        urls : found_urls,
+                    ff = {
+                        urls: found_urls,
                     }
-                    callback( 'success', ff );
+                    callback('success', ff);
                 }
             })
         }
