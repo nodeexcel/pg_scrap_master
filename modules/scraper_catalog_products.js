@@ -3,11 +3,7 @@ var fs = require('fs');
 var scrap_catalog = {
     getUnique: function (website, div) {
         ret = '';
-        if (website.indexOf('shopclues') != -1) {
-            if (div.find('a').attr('pid') != 'undefined') {
-                ret = div.find('a').attr('pid');
-            }
-        } else if (website.indexOf('amazon') != -1) {
+        if (website.indexOf('amazon') != -1) {
             if (typeof div.attr('data-asin') != 'undefined') {
                 unique = div.attr('data-asin');
                 ret = unique.trim();
