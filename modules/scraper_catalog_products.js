@@ -115,8 +115,8 @@ var scrap_catalog = {
         } else if (website.indexOf('forever21') != -1) {
             ret_name = div.find('div.DisplayName').text();
         } else if (website.indexOf('Flipkart') != -1 || website.indexOf('flipkart') != -1) {
-            if (div.find('div.pu-title').find('a').length > 0) {
-                ret_name = div.find('div.pu-title').find('a').attr('title');
+            if(div){
+                ret_name = div;
             }
         } else if (website.indexOf('fabindia') != -1) {
             ret_name = div.find('h2.product-name').text();
@@ -350,8 +350,8 @@ var scrap_catalog = {
                 return_price_text = p_text;
             }
         } else if (website.indexOf('Flipkart') != -1 || website.indexOf('flipkart') != -1) {
-            if (div.find('div.pu-price').find('div.pu-final').length > 0) {
-                p_text = div.find('div.pu-price').find('div.pu-final').text();
+            if(div){
+                p_text  = div;
                 return_price_text = p_text;
             }
         } else if (website.indexOf('shoppersstop') != -1) {
@@ -373,9 +373,10 @@ var scrap_catalog = {
                 return_price_text = return_price_text.trim();
             }
         }
-        if (return_price_text.indexOf('$') != -1) {
-            return_price_text = '1';
-        }
+        // console.log(return_price_text)
+        // if (return_price_text.indexOf('$') != -1) {
+        //     return_price_text = '1';
+        // }
 
         return_price_text = generic_function.getCleanNumber(return_price_text);
 
@@ -519,9 +520,12 @@ var scrap_catalog = {
         } else if (website.indexOf('miracas') != -1) {
             ret = div.find('a.product_img_link').find('img').attr('src');
         } else if (website.indexOf('Flipkart') != -1 || website.indexOf('flipkart') != -1) {
-            if (div.find('a.pu-image').find('img').length > 0) {
-                ret = div.find('a.pu-image').find('img').attr('data-src');
+            if(div){
+                ret = div;
             }
+            // if (div.find('a.pu-image').find('img').length > 0) {
+            //     ret = div.find('a.pu-image').find('img').attr('data-src');
+            // }
         } else if (website.indexOf('indiacircus') != -1) {
             if (div.find('a.product-image').find('img').length > 0) {
                 ret = div.find('a.product-image').find('img').attr('src');
@@ -612,11 +616,15 @@ var scrap_catalog = {
             var href = div.find('a.product_img_link').attr('href');
             return href;
         } else if (website.indexOf('Flipkart') != -1 || website.indexOf('flipkart') != -1) {
-            if (div.find('a.fk-product-thumb').length > 0) {
-                var href = div.find('a.fk-product-thumb').attr('href');
-                href = 'http://www.flipkart.com' + href;
+            if(div){
+                href = div;
                 return href;
             }
+            // if (div.find('a.fk-product-thumb').length > 0) {
+            //     var href = div.find('a.fk-product-thumb').attr('href');
+            //     href = 'http://www.flipkart.com' + href;
+            //     return href;
+            // }
         } else if (website.indexOf('trendin') != -1) {
             var href = div.find('a').attr('href');
             return href;

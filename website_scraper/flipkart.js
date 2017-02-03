@@ -1,10 +1,12 @@
 var _ = require('lodash');
 var affiliate = require('flipkart-affiliate-client');
+var scraper_catalog_products = require('../modules/scraper_catalog_products');
 var client = affiliate.createClient({
     FkAffId: 'manishexce',
     FkAffToken: '5e7d179f81d548a58d44b9d17d2cd0f2',
     responseType: 'json'
 });
+var module_website = 'Flipkart';
 
 module.exports = {
     get_page_products: function (url, callback) {
@@ -16,10 +18,11 @@ module.exports = {
                 var products = [];
                 var a = JSON.parse(result);
                 _.each(a.productInfoList, function (val, key) {
-                    var name = val.productBaseInfoV1.title;
-                    var image = val.productBaseInfoV1.imageUrls.unknown;
-                    var href = val.productBaseInfoV1.productUrl;
-                    var price = val.productBaseInfoV1.flipkartSellingPrice.amount;
+                    name = scraper_catalog_products.getName(module_website, val.productBaseInfoV1.title);
+                    image = scraper_catalog_products.getImage(module_website, val.productBaseInfoV1.imageUrls.unknown);
+                    href = scraper_catalog_products.getHref(module_website, val.productBaseInfoV1.productUrl);
+                    unique = scraper_catalog_products.getUnique(module_website, val.productBaseInfoV1.productId);
+                    price = scraper_catalog_products.getPriceText(module_website, val.productBaseInfoV1.flipkartSellingPrice.amount);
                     var unique = val.productBaseInfoV1.productId;
                     product = {
                         name: name,
