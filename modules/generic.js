@@ -133,12 +133,12 @@ module.exports = {
     return ret;
 },
     getCleanNumber:function (price) {
-    if (price && price != '' && price != null) {
-        price = price.replace(/[^\d.]/g, '');
-        if (price.indexOf('.') == 0) {
-            price = price.replace('.', '');
-        }
-    }
+    // if (price && price != '' && price != null) {
+    //     price = price.replace(/[^\d.]/g, '');
+    //     if (price.indexOf('.') == 0) {
+    //         price = price.replace('.', '');
+    //     }
+    // }
     return price;
 },
     manipulateRating:function (type, rating) {
