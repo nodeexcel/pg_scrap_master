@@ -18,12 +18,11 @@ module.exports = {
                 var products = [];
                 var a = JSON.parse(result);
                 _.each(a.productInfoList, function (val, key) {
-                    name = scraper_catalog_products.getName(module_website, val.productBaseInfoV1.title);
-                    image = scraper_catalog_products.getImage(module_website, val.productBaseInfoV1.imageUrls.unknown);
-                    href = scraper_catalog_products.getHref(module_website, val.productBaseInfoV1.productUrl);
-                    unique = scraper_catalog_products.getUnique(module_website, val.productBaseInfoV1.productId);
-                    price = scraper_catalog_products.getPriceText(module_website, val.productBaseInfoV1.flipkartSellingPrice.amount);
-                    var unique = val.productBaseInfoV1.productId;
+                    name = scraper_catalog_products.getName(module_website, val);
+                    image = scraper_catalog_products.getImage(module_website, val);
+                    href = scraper_catalog_products.getHref(module_website, val);
+                    unique = scraper_catalog_products.getUnique(module_website, val);
+                    price = scraper_catalog_products.getPriceText(module_website, val);
                     product = {
                         name: name,
                         img: image,
