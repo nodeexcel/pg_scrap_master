@@ -8,6 +8,37 @@ var client = affiliate.createClient({
 });
 var module_website = 'Flipkart';
 
+function update_catalog_url(url, url_text, callback) {
+    console.log('waiting time : 10 seconds')
+    client.getCategoryFeed({
+        trackingId: 'manishexce'
+    }, function (err, result) {
+        if (!err) {
+            found_urls = [];
+            var a = JSON.parse(result);
+            var b = a.apiGroups.affiliate.apiListings;
+            _.each(b, function (key, val) {
+                _.each(key, function (key1, val1) {
+                    _.each(key1, function (key2, val2) {
+                        if (key2.get) {
+                            if (val2 == 'v1.1.0') {
+                                var link = key2.get;
+                                link_text = key2.resourceName;
+                                link_text = link_text.replace(/\\"/g, '');
+                                link_text = link_text.trim();
+                                if (link_text == url_text) {
+                                    callback('success', link);
+                                }
+                            }
+                        }
+                    })
+                })
+            })
+        } else {
+            callback('error', err);
+        }
+    });
+}
 module.exports = {
     get_page_products: function (url, callback) {
         client.getProductsFeed({
@@ -34,33 +65,39 @@ module.exports = {
                 })
                 callback('success', products);
             } else {
-                callback('error', response_data);
+                callback('error', err);
             }
         });
     },
     analyse_catalog_url: function (url_level, url, url_text, jquery_path, callback) {
-        client.getProductsFeed({
-            trackingId: 'manishexce',
-            url: url
-        }, function (err, result) {
-            if (!err) {
-                var a = JSON.parse(result);
-                if (result) {
-                    ff = {
-                        url_level: '1',
-                        url: url,
-                        url_text: url_text,
-                        product_count_on_first_page: a.productInfoList.length,
-                        total_pages: '1',
-                        sample_pagination_url: '',
-                        pagination_urls: [url],
-                        all_urls: [],
-                    }
-                    callback('success', ff);
-                }
-            } else {
+        update_catalog_url(url, url_text, function (response_type, link) {
+            if (response_type == 'error') {
                 callback('error', err);
             }
+            console.log('waiting time : 10 seconds');
+            client.getProductsFeed({
+                trackingId: 'manishexce',
+                url: link
+            }, function (err, result) {
+                if (!err) {
+                    var a = JSON.parse(result);
+                    if (result) {
+                        ff = {
+                            url_level: '1',
+                            url: link,
+                            url_text: url_text,
+                            product_count_on_first_page: a.productInfoList.length,
+                            total_pages: '1',
+                            sample_pagination_url: '',
+                            pagination_urls: [link],
+                            all_urls: [],
+                        }
+                        callback('success', ff);
+                    }
+                } else {
+                    callback('error', err);
+                }
+            });
         });
     },
     get_catalog_urls: function (url, jquery_path, callback) {
