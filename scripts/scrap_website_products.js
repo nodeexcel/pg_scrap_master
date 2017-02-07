@@ -613,6 +613,7 @@ function start_scrapping(pending_catalog_urls) {
         unwantedProduct(10, 5, function (response_msg, response_data) {
             if (response_msg == 'error') {
                 console.log(response_data);
+                initiateScrapping();
             } else {
                 console.log(response_msg, response_data);
                 initiateScrapping();
