@@ -11,20 +11,18 @@ var moment = require('moment');
 function unwantedProduct(days, no_of_times) {
     var myNegInt = Math.abs(days) * (-1);
     var last_date = moment().add(myNegInt, 'days').unix();
-    pg_scrap_db2_website_scrap_data.find({"price_history.timestamp": {$lte: last_date}}, function (err, products) {
-        if (err) {
-            console.log(err)
-        } else {
-            var array = [];
-            _.each(products, function (val, key) {
-                var a = val.toJSON();
-                if (a.price_log.length >= no_of_times) {
-                    array.push(products);
-                    products.remove();
+    if (days && no_of_times) {
+        pg_scrap_db2_website_scrap_data.remove({$where: "this.price_log && this.price_log.length >= " + no_of_times + "", "price_history.timestamp": {$lte: last_date}}, function (err, products) {
+            if (err) {
+                console.log(err)
+            } else {
+                if (products.result.ok == 1) {
+                    console.log('Total no of products removed is ' + products.result.n)
                 }
-            });
-            console.log('Total no of products removed is ' + array.length)
-        }
-    });
+            }
+        });
+    } else {
+        console.log('days and no_of_times cannot be empty')
+    }
 }
-unwantedProduct(15, 2);
+unwantedProduct(3, 3);
