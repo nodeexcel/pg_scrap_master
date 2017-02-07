@@ -608,7 +608,16 @@ function start_scrapping(pending_catalog_urls) {
         console.log('*************************************************************************');
         console.log('ALL URLS ARE PROCESSED ------ Going to start scrapping again ');
         console.log('*************************************************************************');
-        initiateScrapping();
+
+
+        unwantedProduct(10, 5, function (response_msg, response_data) {
+            if (response_msg == 'error') {
+                console.log(response_data);
+            } else {
+                console.log(response_msg, response_data);
+                initiateScrapping();
+            }
+        });
         //process.exit(0);
     } else {
         var to_be_scrap = false;
@@ -669,44 +678,35 @@ function start_scrapping(pending_catalog_urls) {
 function initiateScrapping() {
 //    w = {
 //        '_id' : '5694e413c23429483522b03c'
-//    }
-
-
-    unwantedProduct(10, 5, function (response_msg, response_data) {
-        if (response_msg == 'error') {
-            console.log(response_data);
-        } else {
-            console.log(response_msg, response_data);
-            w = {
+//    } 
+    w = {
+        'website': MASTER_WEBSITE,
+        '$or': [
+            {'scrap_status': 0},
+            {'scrap_status': {'$exists': false}},
+        ]
+    }
+    conn_catalog_urls.find(w, function (err, urls) {
+        if (typeof urls == 'undefined' || urls.length == 0) {
+            console.log('no urls found------ reseting all urls');
+            conn_catalog_urls.update({
                 'website': MASTER_WEBSITE,
-                '$or': [
-                    {'scrap_status': 0},
-                    {'scrap_status': {'$exists': false}},
-                ]
-            }
-            conn_catalog_urls.find(w, function (err, urls) {
-                if (typeof urls == 'undefined' || urls.length == 0) {
-                    console.log('no urls found------ reseting all urls');
-                    conn_catalog_urls.update({
-                        'website': MASTER_WEBSITE,
-                    }, {
-                        $set: {'scrap_status': 0}
-                    }, {
-                        multi: true
-                    }, function (err, res) {
-                        if (err) {
-                        } else {
-                            initiateScrapping();
-                            console.log('update hua hau');
-                        }
-                    });
+            }, {
+                $set: {'scrap_status': 0}
+            }, {
+                multi: true
+            }, function (err, res) {
+                if (err) {
                 } else {
-                    //urls = _.first( urls , 5);        
-                    start_scrapping(urls);
+                    initiateScrapping();
+                    console.log('update hua hau');
                 }
-            })
+            });
+        } else {
+            //urls = _.first( urls , 5);        
+            start_scrapping(urls);
         }
-    });
+    })
 }
 
 function unwantedProduct(days, no_of_times, callback) {
