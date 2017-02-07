@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 var PARSER = require('../modules/parser');
 var mongoose = require('mongoose')
+var _ = require('lodash');
+var moment = require('moment');
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
 var conn_pg_scrap_db1 = mongoose.createConnection('mongodb://127.0.0.1/scrap_db1');
@@ -606,7 +608,17 @@ function start_scrapping(pending_catalog_urls) {
         console.log('*************************************************************************');
         console.log('ALL URLS ARE PROCESSED ------ Going to start scrapping again ');
         console.log('*************************************************************************');
-        initiateScrapping();
+
+
+        unwantedProduct(10, 5, function (response_msg, response_data) {
+            if (response_msg == 'error') {
+                console.log(response_data);
+                initiateScrapping();
+            } else {
+                console.log(response_msg, response_data);
+                initiateScrapping();
+            }
+        });
         //process.exit(0);
     } else {
         var to_be_scrap = false;
@@ -667,7 +679,7 @@ function start_scrapping(pending_catalog_urls) {
 function initiateScrapping() {
 //    w = {
 //        '_id' : '5694e413c23429483522b03c'
-//    }
+//    } 
     w = {
         'website': MASTER_WEBSITE,
         '$or': [
@@ -698,6 +710,23 @@ function initiateScrapping() {
     })
 }
 
+function unwantedProduct(days, no_of_times, callback) {
+    var myNegInt = Math.abs(days) * (-1);
+    var last_date = moment().add(myNegInt, 'days').unix();
+    if (days && no_of_times) {
+        pg_scrap_db2_website_scrap_data.find({$where: "this.price_log && this.price_log.length <= " + no_of_times + "", "price_history.timestamp": {$lte: last_date}}, function (err, products) {
+            if (err) {
+                callback("error", err);
+            } else {
+                if (products.result.ok === 1) {
+                    callback('success', 'Total no of products removed is ' + products.result.n);
+                }
+            }
+        });
+    } else {
+        callback("error", 'days and no_of_times cannot be empty');
+    }
+}
 
 
 initiateScrapping();
