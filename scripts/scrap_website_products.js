@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 var PARSER = require('../modules/parser');
 var mongoose = require('mongoose')
+var _ = require('lodash');
+var moment = require('moment');
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
 var conn_pg_scrap_db1 = mongoose.createConnection('mongodb://127.0.0.1/scrap_db1');
@@ -668,36 +670,62 @@ function initiateScrapping() {
 //    w = {
 //        '_id' : '5694e413c23429483522b03c'
 //    }
-    w = {
-        'website': MASTER_WEBSITE,
-        '$or': [
-            {'scrap_status': 0},
-            {'scrap_status': {'$exists': false}},
-        ]
-    }
-    conn_catalog_urls.find(w, function (err, urls) {
-        if (typeof urls == 'undefined' || urls.length == 0) {
-            console.log('no urls found------ reseting all urls');
-            conn_catalog_urls.update({
-                'website': MASTER_WEBSITE,
-            }, {
-                $set: {'scrap_status': 0}
-            }, {
-                multi: true
-            }, function (err, res) {
-                if (err) {
-                } else {
-                    initiateScrapping();
-                    console.log('update hua hau');
-                }
-            });
+
+
+    unwantedProduct(10, 5, function (response_msg, response_data) {
+        if (response_msg == 'error') {
+            console.log(response_data);
         } else {
-            //urls = _.first( urls , 5);        
-            start_scrapping(urls);
+            console.log(response_msg, response_data);
+            w = {
+                'website': MASTER_WEBSITE,
+                '$or': [
+                    {'scrap_status': 0},
+                    {'scrap_status': {'$exists': false}},
+                ]
+            }
+            conn_catalog_urls.find(w, function (err, urls) {
+                if (typeof urls == 'undefined' || urls.length == 0) {
+                    console.log('no urls found------ reseting all urls');
+                    conn_catalog_urls.update({
+                        'website': MASTER_WEBSITE,
+                    }, {
+                        $set: {'scrap_status': 0}
+                    }, {
+                        multi: true
+                    }, function (err, res) {
+                        if (err) {
+                        } else {
+                            initiateScrapping();
+                            console.log('update hua hau');
+                        }
+                    });
+                } else {
+                    //urls = _.first( urls , 5);        
+                    start_scrapping(urls);
+                }
+            })
         }
-    })
+    });
 }
 
+function unwantedProduct(days, no_of_times, callback) {
+    var myNegInt = Math.abs(days) * (-1);
+    var last_date = moment().add(myNegInt, 'days').unix();
+    if (days && no_of_times) {
+        pg_scrap_db2_website_scrap_data.find({$where: "this.price_log && this.price_log.length <= " + no_of_times + "", "price_history.timestamp": {$lte: last_date}}, function (err, products) {
+            if (err) {
+                callback("error", err);
+            } else {
+                if (products.result.ok === 1) {
+                    callback('success', 'Total no of products removed is ' + products.result.n);
+                }
+            }
+        });
+    } else {
+        callback("error", 'days and no_of_times cannot be empty');
+    }
+}
 
 
 initiateScrapping();
