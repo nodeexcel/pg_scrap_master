@@ -448,6 +448,9 @@ var scrap_catalog = {
             if (div.find('img.product-image').length > 0) {
                 ret = div.find('img.product-image').attr('src');
                 if (typeof ret == 'undefined' || ret == '') {
+                    ret = div.find('source').attr('srcset');
+                }
+                if (typeof ret == 'undefined' || ret == '') {
                     ret = div.find('img.product-image').attr('lazySrc');
                 }
                 if (typeof ret == 'undefined' || ret == '') {

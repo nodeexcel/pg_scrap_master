@@ -714,7 +714,7 @@ function unwantedProduct(days, no_of_times, callback) {
     var myNegInt = Math.abs(days) * (-1);
     var last_date = moment().add(myNegInt, 'days').unix();
     if (days && no_of_times) {
-        pg_scrap_db2_website_scrap_data.find({$where: "this.price_log && this.price_log.length <= " + no_of_times + "", "price_history.timestamp": {$lte: last_date}}, function (err, products) {
+        pg_scrap_db2_website_scrap_data.remove({$where: "this.price_log && this.price_log.length <= " + no_of_times + "", "price_history.timestamp": {$lte: last_date}}, function (err, products) {
             if (err) {
                 callback("error", err);
             } else {
