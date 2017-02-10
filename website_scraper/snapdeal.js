@@ -15,7 +15,6 @@ module.exports = {
                 var products = [];
                 
                 jQuery = cheerio.load( response_data );
-                        console.log(jQuery('.product-tuple-listing').length)
                 if( jQuery('.product-tuple-listing').length > 0 ){
                     jQuery('.product-tuple-listing').each( function(){
                         unique = scraper_catalog_products.getUnique( module_website, jQuery(this) );
@@ -23,7 +22,6 @@ module.exports = {
                         price = scraper_catalog_products.getPriceText( module_website, jQuery(this) );
                         image = scraper_catalog_products.getImage( module_website, jQuery(this) );
                         href = scraper_catalog_products.getHref( module_website, jQuery(this) );
-
                         product = {
                             name : name,
                             img : image,
