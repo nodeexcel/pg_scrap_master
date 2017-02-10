@@ -1,6 +1,5 @@
 var generic_function = require('./generic');
 var fs = require('fs');
-var cheerio = require('cheerio');
 var scrap_catalog = {
     getUnique: function (website, div) {
         ret = '';
