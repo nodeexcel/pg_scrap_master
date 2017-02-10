@@ -1,5 +1,6 @@
 var generic_function = require('./generic');
 var fs = require('fs');
+var cheerio = require('cheerio');
 var scrap_catalog = {
     getUnique: function (website, div) {
         ret = '';
@@ -450,7 +451,7 @@ var scrap_catalog = {
             }
         } else if (website.indexOf('snapdeal') != -1 || website.indexOf('Snapdeal') != -1) {
             if (div.find('img.product-image').length > 0) {
-                ret = div.find('img.product-image').attr('src');
+                ret = div.find('source').attr('srcset');
                 if (typeof ret == 'undefined' || ret == '') {
                     ret = div.find('img.product-image').attr('lazySrc');
                 }
