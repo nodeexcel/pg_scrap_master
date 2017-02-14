@@ -1,16 +1,8 @@
-var Spooky = require('spooky');
 var parser_aa = require('../modules/parser');
-var mongoose = require('mongoose')
 var scraper_catalog_products = require('../modules/scraper_catalog_products');
-var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
-var schema_catalog_urls = mongoose.Schema({}, {
-    strict: false,
-    collection: 'catalog_urls'
-});
-var conn_catalog_urls = conn_pg_catalog_urls.model('catalog_urls', schema_catalog_urls);
 var cheerio = require('cheerio');
-var module_website = 'amazon';
 
+var module_website = 'amazon';
 module.exports = {
     get_page_products: function (url, callback) {
         parser_aa.get_html(url, function (response_type, response_data) {
@@ -44,6 +36,7 @@ module.exports = {
         })
     },
     analyse_catalog_url: function (url_level, url, url_text, jquery_path, callback) {
+
         parser_aa.get_html(url, function (response_type, response_data) {
             if (response_type == 'error') {
                 callback('error', response_data);
@@ -124,35 +117,19 @@ module.exports = {
                         }
                         //all_urls.push( all_urls.length );
                     }
-                    var set_url = '';
-                    conn_catalog_urls.find({website: module_website}, function (err, result) {
-                        if (err) {
-                            callback('error', err);
-                        } else {
-                            for (var a = 0; a < result.length; a++) {
-                                var row = result[a];
-                                var urls_text = row.get('url_text');
-                                var urls = row.get('url');
-                                if (urls_text == url_text) {
-                                    set_url = urls;
-                                }
-                            }
-                            if (set_url == '') {
-                                set_url = url;
-                            }
-                            ff = {
-                                url_level: url_level,
-                                url: set_url,
-                                url_text: url_text,
-                                product_count_on_first_page: d_product_count_on_first_page,
-                                total_pages: d_total_pages,
-                                sample_pagination_url: sample_pagination_url,
-                                pagination_urls: pagination_urls,
-                                all_urls: all_urls,
-                            }
-                            callback('success', ff);
-                        }
-                    });
+
+                    ff = {
+                        url_level: url_level,
+                        url: url,
+                        url_text: url_text,
+                        product_count_on_first_page: d_product_count_on_first_page,
+                        total_pages: d_total_pages,
+                        sample_pagination_url: sample_pagination_url,
+                        pagination_urls: pagination_urls,
+                        all_urls: all_urls,
+                    }
+
+                    callback('success', ff);
                 } catch (err) {
                     callback('error', err);
                 }
@@ -164,11 +141,19 @@ module.exports = {
 
         } else {
             parser_aa.get_html(url, function (response_type, response_data) {
+
+                console.log(response_type);
+
                 if (response_type == 'error') {
+                    console.log('s');
                     callback('error', err);
                 } else {
+                    //console.log( response_data );
                     jQuery = cheerio.load(response_data);
+
                     found_urls = [];
+
+
                     if (jQuery('li').find('a').length > 0) {
                         jQuery('li').find('a').each(function () {
                             link = jQuery(this).attr('href');
@@ -185,6 +170,9 @@ module.exports = {
                             }
                         })
                     }
+
+
+
                     var d_product_count_on_first_page = 0;
                     var d_total_pages = 0;
                     if (jQuery('#mainResults').find('li').length > 0) {
@@ -196,9 +184,12 @@ module.exports = {
                     ff = {
                         urls: found_urls,
                     }
+
+
                     callback('success', ff);
                 }
             })
         }
     }
 }
+
