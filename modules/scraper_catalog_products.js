@@ -115,7 +115,7 @@ var scrap_catalog = {
         } else if (website.indexOf('forever21') != -1) {
             ret_name = div.find('div.DisplayName').text();
         } else if (website.indexOf('Flipkart') != -1 || website.indexOf('flipkart') != -1) {
-            if(div.productBaseInfoV1.title){
+            if (div.productBaseInfoV1.title) {
                 ret_name = div.productBaseInfoV1.title;
             }
         } else if (website.indexOf('fabindia') != -1) {
@@ -350,8 +350,8 @@ var scrap_catalog = {
                 return_price_text = p_text;
             }
         } else if (website.indexOf('Flipkart') != -1 || website.indexOf('flipkart') != -1) {
-            if(div.productBaseInfoV1.flipkartSellingPrice.amount){
-                p_text  = div.productBaseInfoV1.flipkartSellingPrice.amount;
+            if (div.productBaseInfoV1.flipkartSellingPrice.amount) {
+                p_text = div.productBaseInfoV1.flipkartSellingPrice.amount;
                 return_price_text = p_text;
             }
         } else if (website.indexOf('shoppersstop') != -1) {
@@ -460,6 +460,10 @@ var scrap_catalog = {
                 if (typeof ret == 'undefined' || ret == '') {
                     ret = div.find('img.product-image').attr('lazysrc');
                 }
+                if (typeof ret == 'undefined' || ret == '') {
+                    img_url = div.find('input').val();
+                    ret = img_url.replace("64x75", "large");
+                }
             }
             //ret = div.find('img.gridViewImage').attr('src');
         } else if (website.indexOf('fabindia') != -1) {
@@ -523,7 +527,7 @@ var scrap_catalog = {
         } else if (website.indexOf('miracas') != -1) {
             ret = div.find('a.product_img_link').find('img').attr('src');
         } else if (website.indexOf('Flipkart') != -1 || website.indexOf('flipkart') != -1) {
-            if(div.productBaseInfoV1.imageUrls.unknown){
+            if (div.productBaseInfoV1.imageUrls.unknown) {
                 ret = div.productBaseInfoV1.imageUrls.unknown;
             }
             // if (div.find('a.pu-image').find('img').length > 0) {
@@ -619,7 +623,7 @@ var scrap_catalog = {
             var href = div.find('a.product_img_link').attr('href');
             return href;
         } else if (website.indexOf('Flipkart') != -1 || website.indexOf('flipkart') != -1) {
-            if(div.productBaseInfoV1.productUrl){
+            if (div.productBaseInfoV1.productUrl) {
                 href = div.productBaseInfoV1.productUrl;
                 return href;
             }
