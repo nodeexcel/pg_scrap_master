@@ -256,112 +256,36 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    pg_scrap_db1_website_scrap_data.find(where, function (err, result) {
+            
+    
+    pg_scrap_db2_website_scrap_data.find(where, function (err, result) {
         if (err) {
             callback('Error Occurs');
             return true;
         } else {
-            var default_db_table = false;
             if (result.length == 0) {
-                pg_scrap_db2_website_scrap_data.find(where, function (err, result) {
-                    if (err) {
-                        callback('Error Occurs');
+                //it means product is not found in 3 databases so it will be insert in scrap_db2 database of pricegenie
+                console.log('Product Not Exists');
+                if (new_data.price != '' && new_data.price > 0) {
+                    product_info['price_history'] = [{
+                            date: PARSER.currentDate(),
+                            timestamp: PARSER.currentTimestamp(),
+                            price: new_data.price * 1
+                        }];
+                    price_log_text = PARSER.currentDate() + '__' + PARSER.currentDateTimeDay() + '____' + new_data.price;
+                    product_info['price_log'] = [price_log_text];
+                }
+                console.log("\n");
+                console.log('Going To Insert');
+                console.log(product_info);
+                var insert_new_product = new pg_scrap_db2_website_scrap_data(product_info);
+                insert_new_product.save(function () {
+                    update_scrap_stats(u_rec_id, 'insert', function (aa) {
+                        console.log('1 INSERT :: ' + aa);
+                        callback('Products Inserted');
                         return true;
-                    } else {
-                        if (result.length == 0) {
-                            fiq_scrap_db3_website_scrap_data.find(where, function (err, result) {
-                                if (err) {
-                                    callback('Error Occurs');
-                                    return true;
-                                } else {
-                                    if (result.length == 0) {
-                                        //it means product is not found in 3 databases so it will be insert in scrap_db2 database of pricegenie
-                                        console.log('Product Not Exists');
-                                        if (new_data.price != '' && new_data.price > 0) {
-                                            product_info['price_history'] = [{
-                                                    date: PARSER.currentDate(),
-                                                    timestamp: PARSER.currentTimestamp(),
-                                                    price: new_data.price * 1
-                                                }];
-                                            price_log_text = PARSER.currentDate() + '__' + PARSER.currentDateTimeDay() + '____' + new_data.price;
-                                            product_info['price_log'] = [price_log_text];
-                                        }
-                                        console.log("\n");
-                                        console.log('Going To Insert');
-                                        console.log(product_info);
-                                        var insert_new_product = new pg_scrap_db2_website_scrap_data(product_info);
-                                        insert_new_product.save(function () {
-                                            update_scrap_stats(u_rec_id, 'insert', function (aa) {
-                                                console.log('1 INSERT :: ' + aa);
-                                                callback('Products Inserted');
-                                                return true;
-                                            });
-                                        })
-                                    } else {
-                                        exist_product = result[0];
-                                        price_history_and_log = get_price_history_and_log(exist_product, new_data);
-                                        to_be_update_data = {
-                                            date_of_birth: PARSER.currentIsoDate(),
-                                            price: new_data.price,
-                                            price_history: price_history_and_log.price_history,
-                                            price_log: price_history_and_log.price_log,
-                                            updated: 1,
-                                            time: PARSER.currentTimestamp(),
-                                            time_pretty: PARSER.currentIsoDate(),
-                                            date: PARSER.currentDate(),
-                                            scrap_source: 'pg_scrap_master',
-                                        };
-                                        console.log("\n");
-                                        console.log('Going To Update --- FASHIONIQ SCRAP_DB3');
-                                        console.log(to_be_update_data);
-                                        fiq_scrap_db3_website_scrap_data.update(where, {'$set': to_be_update_data}, function (err, res) {
-                                            if (err) {
-                                                callback('Products Updated');
-                                                return true;
-                                            } else {
-                                                update_scrap_stats(u_rec_id, 'update', function (aa) {
-                                                    console.log('1 UPdated :: ' + aa);
-                                                    callback('Products Updated');
-                                                    return true;
-                                                });
-                                            }
-                                        });
-                                    }
-                                }
-                            });
-                        } else {
-                            exist_product = result[0];
-                            //----------------------------------------------
-                            price_history_and_log = get_price_history_and_log(exist_product, new_data);
-                            to_be_update_data = {
-                                date_of_birth: PARSER.currentIsoDate(),
-                                price: new_data.price,
-                                price_history: price_history_and_log.price_history,
-                                price_log: price_history_and_log.price_log,
-                                updated: 1,
-                                time: PARSER.currentTimestamp(),
-                                time_pretty: PARSER.currentIsoDate(),
-                                date: PARSER.currentDate(),
-                                scrap_source: 'pg_scrap_master',
-                            };
-                            console.log("\n");
-                            console.log('Going To Update --- PRICEGENIE SCRAP_DB2');
-                            console.log(to_be_update_data);
-                            pg_scrap_db2_website_scrap_data.update(where, {'$set': to_be_update_data}, function (err, res) {
-                                if (err) {
-                                    callback('Products Updated');
-                                    return true;
-                                } else {
-                                    update_scrap_stats(u_rec_id, 'update', function (aa) {
-                                        console.log('1 UPdated :: ' + aa);
-                                        callback('Products Updated');
-                                        return true;
-                                    });
-                                }
-                            });
-                        }
-                    }
-                });
+                    });
+                })
             } else {
                 exist_product = result[0];
                 price_history_and_log = get_price_history_and_log(exist_product, new_data);
@@ -375,11 +299,14 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                     time_pretty: PARSER.currentIsoDate(),
                     date: PARSER.currentDate(),
                     scrap_source: 'pg_scrap_master',
+                    cat_id : new_data.cat_id,
+                    sub_cat_id :new_data.sub_cat_id,
+                    catalog_url_mongo_id :new_data.catalog_url_mongo_id
                 };
                 console.log("\n");
-                console.log('Going To Update --- PRICEGENIE SCRAP_DB1');
+                console.log('Going To Update ---SCRAP_DB2');
                 console.log(to_be_update_data);
-                pg_scrap_db1_website_scrap_data.update(where, {'$set': to_be_update_data}, function (err, res) {
+                pg_scrap_db2_website_scrap_data.update(where, {'$set': to_be_update_data}, function (err, res) {
                     if (err) {
                         callback('Products Updated');
                         return true;
@@ -394,6 +321,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
             }
         }
     });
+           
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
