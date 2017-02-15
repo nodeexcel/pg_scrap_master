@@ -216,8 +216,8 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
     new_data.website = website;
     new_data.website_category = website_category;
     new_data.catalog_url_mongo_id = u_rec_id;
-    new_data.u_cat_id = u_cat_id;
-    new_data.u_sub_cat_id = u_sub_cat_id;
+    new_data.cat_id = u_cat_id;
+    new_data.sub_cat_id = u_sub_cat_id;
     var url = new_data.href;
     var unique = '';
     if (typeof new_data.unique != 'undefined' && new_data.unique != '') {
