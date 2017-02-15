@@ -310,6 +310,8 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                             time_pretty: PARSER.currentIsoDate(),
                                             date: PARSER.currentDate(),
                                             scrap_source: 'pg_scrap_master',
+                                            cat_id = u_cat_id,
+                                            sub_cat_id = u_sub_cat_id,
                                         };
                                         console.log("\n");
                                         console.log('Going To Update --- FASHIONIQ SCRAP_DB3');
@@ -343,6 +345,8 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                 time_pretty: PARSER.currentIsoDate(),
                                 date: PARSER.currentDate(),
                                 scrap_source: 'pg_scrap_master',
+                                cat_id = u_cat_id,
+                                sub_cat_id = u_sub_cat_id,
                             };
                             console.log("\n");
                             console.log('Going To Update --- PRICEGENIE SCRAP_DB2');
@@ -375,6 +379,8 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                     time_pretty: PARSER.currentIsoDate(),
                     date: PARSER.currentDate(),
                     scrap_source: 'pg_scrap_master',
+                    cat_id = u_cat_id,
+                    sub_cat_id = u_sub_cat_id,
                 };
                 console.log("\n");
                 console.log('Going To Update --- PRICEGENIE SCRAP_DB1');
