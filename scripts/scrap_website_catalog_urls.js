@@ -80,14 +80,29 @@ function add_new_catalog_url(website, new_data, callback) {
         new_url_text = new_url_text.toLowerCase();
         where = {
             website: website,
-            url: new_url
+            url_text: new_url_text
         }
         conn_catalog_urls.find(where, function (err, result) {
             if (err) {
                 callback('error occurs');
             } else {
                 if (typeof result != 'undefined' && result.length > 0) {
-                    callback('CATALOG URL ALREADY EXISTS');
+                    var to_be_update_data = {
+                        url: new_url,
+                        count_first_page_products: new_data.count_first_page_products,
+                        count_total_pages: new_data.count_total_pages,
+                        url_level: new_data.url_level,
+                    }
+                    console.log(to_be_update_data);
+                    conn_catalog_urls.update(where, {
+                        $set: to_be_update_data
+                    }, function (err, res) {
+                        if (err) {
+                            callback('error');
+                        } else {
+                            callback('CATALOG URL TEXT ALREADY EXISTS');
+                        }
+                    });
                 } else {
                     var new_catalog_url = {
                         website: website,
