@@ -4,6 +4,10 @@ var PARSER = require('../modules/parser');
 var mongoose = require('mongoose')
 var _ = require('lodash');
 var moment = require('moment');
+var nodemailer = require('nodemailer');
+var hbs = require('nodemailer-express-handlebars');
+var smtpTransport = require('nodemailer-smtp-transport');
+var mandrill = require('mandrill-api/mandrill');
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
 var conn_pg_scrap_db1 = mongoose.createConnection('mongodb://127.0.0.1/scrap_db1');
@@ -244,7 +248,8 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
     }
     where = {
         website: website,
-        unique: unique
+        // unique: unique
+        unique: 'B00B78P71Q'
     }
     var product_info = new_data;
     console.log('------------------------------------------------------------------------------');
@@ -256,8 +261,8 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
-            
-    
+
+
     pg_scrap_db2_website_scrap_data.find(where, function (err, result) {
         if (err) {
             callback('Error Occurs');
@@ -299,13 +304,17 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                     time_pretty: PARSER.currentIsoDate(),
                     date: PARSER.currentDate(),
                     scrap_source: 'pg_scrap_master',
-                    cat_id : new_data.cat_id,
-                    sub_cat_id :new_data.sub_cat_id,
-                    catalog_url_mongo_id :new_data.catalog_url_mongo_id
+                    cat_id: new_data.cat_id,
+                    sub_cat_id: new_data.sub_cat_id,
+                    catalog_url_mongo_id: new_data.catalog_url_mongo_id
                 };
                 console.log("\n");
                 console.log('Going To Update ---SCRAP_DB2');
                 console.log(to_be_update_data);
+                console.log('-------------------------------------')
+
+
+
                 pg_scrap_db2_website_scrap_data.update(where, {'$set': to_be_update_data}, function (err, res) {
                     if (err) {
                         callback('Products Updated');
@@ -313,15 +322,19 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                     } else {
                         update_scrap_stats(u_rec_id, 'update', function (aa) {
                             console.log('1 UPdated :: ' + aa);
-                            callback('Products Updated');
-                            return true;
+                            var exist_product_price = exist_product.get('price');
+                            mail_alert(exist_product_price, new_data.price, exist_product, function (response_msg, response_data) {
+                                console.log(response_msg, response_data);
+                                callback('Products Updated');
+                                return true;
+                            });
                         });
                     }
                 });
             }
         }
     });
-           
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -668,11 +681,57 @@ function unwantedProduct(days, no_of_times, callback) {
     }
 }
 
+function mail_alert(exist_product_price, new_data_price, exist_product, callback) {
+    var genie_alerts = exist_product.get('genie_alerts');
+    if ((new_data_price < exist_product_price) && genie_alerts) {
+        var product_name = exist_product.get('name');
+        var product_url = exist_product.get('href');
+        _.forEach(genie_alerts, function (val, key) {
+            var email = val.email_id;
+            var newPasswordMsg = {
+                subject: 'Price changed from ' + exist_product_price + ' to ' + new_data_price,
+                body: product_name + ' Price changed from ' + exist_product_price + ' to ' + new_data_price + '.\n Buy Now ' + product_url,
+            };
+            var options = {
+                viewEngine: {
+                    extname: '.hbs',
+                    layoutsDir: 'views/email/',
+                    defaultLayout: 'template',
+                    partialsDir: 'views/partials/'
+                },
+                viewPath: 'views/email/',
+                extName: '.hbs'
+            };
+            var mandrill_client = new mandrill.Mandrill('Ca4nS3QStEcpvZdk9iMh0Q');
+            var mailer = nodemailer.createTransport(smtpTransport({
+                host: 'smtp.sendgrid.net',
+                port: 25,
+                auth: {
+                    user: 'apikey',
+                    pass: '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'
+                }
+            }));
+            mailer.use('compile', hbs(options));
+            mailer.sendMail({
+                from: 'noreply@fashioniq.in',
+                to: email,
+                subject: 'Price changed from ' + exist_product_price + ' to ' + new_data_price,
+                template: 'template',
+                context: newPasswordMsg
+            }, function (error, response) {
+                if (error) {
+                    console.log(error);
+                }
+                console.log('mail sent to ' + email);
+                mailer.close();
+            });
+        });
+        callback('0', 'messsage send successfully');
+    } else {
+        callback('1', 'messsage not send successfully');
+    }
+}
 
 initiateScrapping();
-
-
-
-
 
 module.exports = router;
