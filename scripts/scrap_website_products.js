@@ -694,8 +694,6 @@ function unwantedProduct(days, no_of_times, callback) {
         callback("error", 'days and no_of_times cannot be empty');
     }
 }
-// mail_alert(email, subject, 'template', content);
-
 
 function mail_alert(email, subject, template, content, callback) {
     var mandrill_client = new mandrill.Mandrill('Ca4nS3QStEcpvZdk9iMh0Q');
