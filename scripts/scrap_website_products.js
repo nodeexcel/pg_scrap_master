@@ -35,6 +35,11 @@ var schema_catalog_urls = mongoose.Schema({}, {
     collection: 'catalog_urls'
 });
 var conn_catalog_urls = conn_pg_catalog_urls.model('catalog_urls', schema_catalog_urls);
+var schema_price_alerts_email_log = mongoose.Schema({}, {
+    strict: false,
+    collection: 'price_alerts_email_log'
+});
+var conn_price_alerts_email_log = conn_pg_scrap_db2.model('price_alerts_email_log', schema_price_alerts_email_log);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var _ = require('underscore');
@@ -248,7 +253,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
     }
     where = {
         website: website,
-         unique: unique
+        unique: unique
     }
     var product_info = new_data;
     console.log('------------------------------------------------------------------------------');
@@ -313,7 +318,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                 console.log('-------------------------------------')
 
 
-
+                console.log(exist_product._id)
                 pg_scrap_db2_website_scrap_data.update(where, {'$set': to_be_update_data}, function (err, res) {
                     if (err) {
                         callback('Products Updated');
@@ -331,8 +336,32 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                 var content = product_name + ' Price changed from ' + exist_product_price + ' to ' + new_data_price + '.\n Buy Now ' + product_url;
                                 _.forEach(genie_alerts, function (val, key) {
                                     var email = val.email_id;
-                                    mail_alert(email, subject, 'template', content, function (response_msg, response_data) {
-                                        console.log(response_msg, response_data)
+                                    mail_alert(email, subject, 'template', content, to_be_update_data, function (response_msg, response_data, response) {
+                                        if (response) {
+                                            if (response.accepted) {
+                                                email_sent_status = 'sent';
+                                            } else {
+                                                email_sent_status = 'not sent';
+                                            }
+                                            var email_info = {
+                                                email_sent_status: email_sent_status,
+                                                email_sent_response: response.response,
+                                                scrap_product_id: exist_product._id,
+                                                website: exist_product.get('website'),
+                                                time: PARSER.currentIsoDate(),
+                                                email_id: email,
+                                                old_price: exist_product_price,
+                                                new_price: new_data_price
+                                            };
+                                            var insert_email_info = new conn_price_alerts_email_log(email_info);
+                                            insert_email_info.save(function (err, resp) {
+                                                if (err) {
+                                                    console.log(err)
+                                                } else {
+                                                    console.log(resp);
+                                                }
+                                            })
+                                        }
                                     });
                                 });
                                 console.log('email sent successfully');
@@ -695,7 +724,7 @@ function unwantedProduct(days, no_of_times, callback) {
     }
 }
 
-function mail_alert(email, subject, template, content, callback) {
+function mail_alert(email, subject, template, content, to_be_update_data, callback) {
     var mandrill_client = new mandrill.Mandrill('Ca4nS3QStEcpvZdk9iMh0Q');
     var mailer = nodemailer.createTransport(smtpTransport({
         host: 'smtp.sendgrid.net',
@@ -717,9 +746,9 @@ function mail_alert(email, subject, template, content, callback) {
             callback('1', 'messsage not send successfully');
         }
         console.log('mail sent to ' + email);
+        callback('0', 'messsage send successfully', response);
         mailer.close();
     });
-    callback('0', 'messsage send successfully');
 }
 
 initiateScrapping();
