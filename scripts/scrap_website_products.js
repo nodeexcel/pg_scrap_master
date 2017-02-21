@@ -336,10 +336,9 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                 _.forEach(genie_alerts, function (val, key) {
                                     var email = val.email_id;
                                     var website = val.website;
+                                    var from = 'noreply@pricegenie.co';
                                     if (website == 'fashionq') {
-                                        var from = 'noreply@fashioniq.in';
-                                    } else {
-                                        from = 'noreply@pricegenie.co';
+                                        from = 'noreply@fashioniq.in';
                                     }
                                     mail_alert(email, subject, 'template', from, html, function (response_msg, response_data, response) {
                                         if (response) {
