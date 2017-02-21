@@ -254,7 +254,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
     where = {
         website: website,
         unique: unique
-        // unique: 'B00B78P71Q'
+                // unique: 'B00B78P71Q'
     }
     var product_info = new_data;
     console.log('------------------------------------------------------------------------------');
@@ -332,11 +332,16 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                 var product_url = exist_product.get('href');
                                 var product_img = exist_product.get('img');
                                 var subject = 'Price down alert - From old_price to new Price';
-                                var content = product_name + ' Price changed from ' + exist_product_price + ' to ' + new_data_price + '.\n Buy Now ' + product_url;
                                 var html = '<html><head><style>td ,th{border-style: solid;border-color: grey;}</style></head><body><b>Hello</b><br><br>Greeting from Pricegenie. <br><br>Price is down.<br><br><a href=' + product_url + '><table style="width:100%"><tr align="center"><td colspan="4"><font size="5">' + product_name + '</font></td></tr><tr align="center"><th rowspan="2"><img src=' + product_img + ' alt="Smiley face" height="80" width="80"></th><th>Old price</th><th>New price</th><th rowspan="2"><button type="button" style="height:50px;width:auto">Buy now!</button></th></tr><tr align="center"><td>' + exist_product_price + '</td><td>' + new_data_price + '</td></tr></tr></table></a></body></html>'
                                 _.forEach(genie_alerts, function (val, key) {
                                     var email = val.email_id;
-                                    mail_alert(email, subject, 'template', content, html, function (response_msg, response_data, response) {
+                                    var website = val.website;
+                                    if (website == 'fashionq') {
+                                        var from = 'noreply@fashioniq.in';
+                                    } else {
+                                        from = 'noreply@pricegenie.co';
+                                    }
+                                    mail_alert(email, subject, 'template', from, html, function (response_msg, response_data, response) {
                                         if (response) {
                                             if (response.accepted) {
                                                 email_sent_status = 'sent';
@@ -724,7 +729,7 @@ function unwantedProduct(days, no_of_times, callback) {
     }
 }
 
-function mail_alert(email, subject, template, content, html, callback) {
+function mail_alert(email, subject, template, from, html, callback) {
     var mandrill_client = new mandrill.Mandrill('Ca4nS3QStEcpvZdk9iMh0Q');
     var mailer = nodemailer.createTransport(smtpTransport({
         host: 'smtp.sendgrid.net',
@@ -735,11 +740,10 @@ function mail_alert(email, subject, template, content, html, callback) {
         }
     }));
     mailer.sendMail({
-        from: 'noreply@pricegenie.co',
+        from: from,
         to: email,
         subject: subject,
         template: 'template',
-        text: content,
         html: html
     }, function (error, response) {
         if (error) {
