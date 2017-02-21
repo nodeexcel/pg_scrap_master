@@ -253,8 +253,8 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
     }
     where = {
         website: website,
-        // unique: unique
-        unique: 'B00B78P71Q'
+        unique: unique
+        // unique: 'B00B78P71Q'
     }
     var product_info = new_data;
     console.log('------------------------------------------------------------------------------');
