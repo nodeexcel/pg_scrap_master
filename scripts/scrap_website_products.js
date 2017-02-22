@@ -137,15 +137,15 @@ function update_scrap_stats(rec_id, type, callback) {
                 'insert': count_insert,
                 'update': count_update
             }
-            if (type == 'scrap_start') {
+            if (count_insert == 0 && type == 'scrap_start') {
                 to_be_update_data['scrap_status'] = 1;
                 date_wise_stats[ today_date ] = {
                     'insert': 0,
                     'update': 0
                 }
             }
-            to_be_update_data['date_wise_stats'] = date_wise_stats;
 
+            to_be_update_data['date_wise_stats'] = date_wise_stats;
             conn_catalog_urls.update(where, {
                 $set: to_be_update_data
             }, function (err, res) {
