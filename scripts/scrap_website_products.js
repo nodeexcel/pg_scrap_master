@@ -332,7 +332,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                 var product_name = exist_product.get('name');
                                 var product_url = exist_product.get('href');
                                 var product_img = exist_product.get('img');
-                                var subject = 'Price down alert - From old price to new Price';
+                                var subject = 'Price down alert - From '+exist_product_price+' to '+new_data_price+'';
                                 _.forEach(genie_alerts, function (val, key) {
                                     var email = val.email_id;
                                     var website = val.website;
