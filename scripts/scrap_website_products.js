@@ -9,7 +9,7 @@ var hbs = require('nodemailer-express-handlebars');
 var smtpTransport = require('nodemailer-smtp-transport');
 var mandrill = require('mandrill-api/mandrill');
 var jwt = require('jwt-simple');
-var FCM = require('fcm-node');
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
 var conn_pg_scrap_db1 = mongoose.createConnection('mongodb://127.0.0.1/scrap_db1');
@@ -86,7 +86,8 @@ var jquery_path = '../public/js/jquery-1.8.3.min.js';
 
 
 var GENERIC = require('../modules/generic');
-
+var PUSH_MESSAGE = require('../modules/push_message');
+var MAIL = require('../modules/mail');
 var date = require('date-and-time');
 
 var CONFIG_scrap_number_of_pagination = 20; // total number og pages to scrap per catalog url, set 0 for all i.e to scrap all pagination pages
@@ -369,9 +370,14 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                                 } else {
                                                     var push_token = resp.get('reg_id');
                                                     var payload = { product_id: exist_product._id };
-                                                    var notify = { title: subject, body: product_name };
+                                                    var notify = {
+                                                        title: 'Price down alert',
+                                                        body: product_name + ' from ' + exist_product_price + 'rs to ' + new_data_price + 'rs',
+                                                        click_action: "FCM_PLUGIN_ACTIVITY",
+                                                        "color": "#f95b2c"
+                                                    };
                                                     var serverKey = 'AAAAoDVUotg:APA91bGSSsdmlLFx9ihoi3Kq7XMrYr24pMKfL93j4M9p7qNg8eWeqYWmp9HSfbUhaqjZxEC9uvrXQ6_Fgs5mKUcov2xNKHqkKxUNx9Bd7rjhYJ2g7472Z-DxkPLZYv4cny8wah4w1LON';
-                                                    push_notification(serverKey, push_token, payload, notify, function(error, response) {
+                                                    PUSH_MESSAGE.push_notification(serverKey, push_token, payload, notify, function(error, response) {
                                                         if (error == 'error') {
                                                             console.log(response);
                                                         } else {
@@ -382,10 +388,11 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                             })
                                         }
                                     })
+
                                     token_encode(payload, secret, function(token) {
                                         var token_link = 'http://pricegenie.co/my_genie_alerts.php?email=' + token;
                                         var html = '<html><head><style>td ,th{border-style: solid;border-color: grey;}</style></head><body><b>Hello</b><br><br>Greeting from Pricegenie. <br><br>Price is down.<br><br><a href=' + product_url + '><table style="width:100%"><tr align="center"><td colspan="4"><font size="5">' + product_name + '</font></td></tr><tr align="center"><th rowspan="2"><img src=' + product_img + ' alt="Smiley face" height="80" width="80"></th><th>Old price</th><th>New price</th><th rowspan="2"><button type="button" style="height:50px;width:auto">Buy now!</button></th></tr><tr align="center"><td>' + exist_product_price + '</td><td>' + new_data_price + '</td></tr></tr></table></a><br><br><a href="' + token_link + '">View all your Price Alerts</a></body></html>'
-                                        mail_alert(email, subject, 'template', from, html, function(response_msg, response_data, response) {
+                                        MAIL.mail_alert(email, subject, 'template', from, html, function(response_msg, response_data, response) {
                                             if (response) {
                                                 if (response.accepted) {
                                                     email_sent_status = 'sent';
@@ -536,17 +543,6 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
     //            }
     //        }
     //    })
-
-
-
-
-
-
-
-
-
-
-
 }
 
 function insert_or_update_products(u_rec_id, website, website_category, u_cat_id, u_sub_cat_id, scraped_products, callback) {
@@ -648,7 +644,7 @@ function start_scrapping(pending_catalog_urls) {
         console.log('*************************************************************************');
 
 
-        unwantedProduct(10, 5, function(response_msg, response_data) {
+        unwantedProduct(60, 5, function(response_msg, response_data) {
             if (response_msg == 'error') {
                 console.log(response_data);
                 initiateScrapping();
@@ -772,33 +768,6 @@ function unwantedProduct(days, no_of_times, callback) {
     }
 }
 
-function mail_alert(email, subject, template, from, html, callback) {
-    var mandrill_client = new mandrill.Mandrill('Ca4nS3QStEcpvZdk9iMh0Q');
-    var mailer = nodemailer.createTransport(smtpTransport({
-        host: 'smtp.sendgrid.net',
-        port: 25,
-        auth: {
-            user: 'apikey',
-            pass: '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'
-        }
-    }));
-    mailer.sendMail({
-        from: from,
-        to: email,
-        subject: subject,
-        template: 'template',
-        html: html
-    }, function(error, response) {
-        if (error) {
-            console.log(error);
-            callback('1', 'messsage not send successfully');
-        }
-        console.log('mail sent to ' + email);
-        callback('0', 'messsage send successfully', response);
-        mailer.close();
-    });
-};
-
 function token_encode(payload, secret, callback) {
     if (payload && secret) {
         //encode
@@ -809,22 +778,6 @@ function token_encode(payload, secret, callback) {
     }
 };
 
-function push_notification(serverKey, token, payload, notify, callback) {
-    var fcm = new FCM(serverKey);
-    var message = {
-        to: token,
-        collapse_key: 'your_collapse_key',
-        notification: notify,
-        data: payload,
-    };
-    fcm.send(message, function(err, response) {
-        if (err) {
-            callback('error', err);
-        } else {
-            callback('success', response)
-        }
-    });
-};
 initiateScrapping();
 
 
