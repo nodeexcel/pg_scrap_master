@@ -9,6 +9,7 @@ var hbs = require('nodemailer-express-handlebars');
 var smtpTransport = require('nodemailer-smtp-transport');
 var mandrill = require('mandrill-api/mandrill');
 var jwt = require('jwt-simple');
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
 var conn_pg_scrap_db1 = mongoose.createConnection('mongodb://127.0.0.1/scrap_db1');
@@ -42,6 +43,18 @@ var schema_price_alerts_email_log = mongoose.Schema({}, {
 });
 var conn_price_alerts_email_log = conn_pg_scrap_db2.model('price_alerts_email_log', schema_price_alerts_email_log);
 
+var users_schema = mongoose.Schema({}, {
+    strict: false,
+    collection: 'users'
+});
+var conn_user = conn_pg_scrap_db2.model('users', users_schema);
+
+var gcms_schema = mongoose.Schema({}, {
+    strict: false,
+    collection: 'gcms'
+});
+var conn_gcms = conn_pg_scrap_db2.model('gcms', gcms_schema);
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var _ = require('underscore');
 //*******************************************************************************************************
@@ -73,7 +86,8 @@ var jquery_path = '../public/js/jquery-1.8.3.min.js';
 
 
 var GENERIC = require('../modules/generic');
-
+var PUSH_MESSAGE = require('../modules/push_message');
+var MAIL = require('../modules/mail');
 var date = require('date-and-time');
 
 var CONFIG_scrap_number_of_pagination = 20; // total number og pages to scrap per catalog url, set 0 for all i.e to scrap all pagination pages
@@ -99,7 +113,7 @@ function update_scrap_stats(rec_id, type, callback) {
     where = {
         "_id": rec_id,
     }
-    conn_catalog_urls.findOne(where, function (err, result) {
+    conn_catalog_urls.findOne(where, function(err, result) {
         if (typeof result == 'undefined' || result.length == 0) {
             callback('record not found');
             return true;
@@ -112,7 +126,7 @@ function update_scrap_stats(rec_id, type, callback) {
             if (typeof date_wise_stats == 'undefined') {
                 date_wise_stats = {};
             } else {
-                _.each(date_wise_stats, function (val, key) {
+                _.each(date_wise_stats, function(val, key) {
                     if (key == today_date) {
                         if (typeof val.insert != 'undefined') {
                             count_insert = val.insert;
@@ -133,13 +147,13 @@ function update_scrap_stats(rec_id, type, callback) {
             if (type == 'update') {
                 count_update = count_update + 1;
             }
-            date_wise_stats[ today_date ] = {
+            date_wise_stats[today_date] = {
                 'insert': count_insert,
                 'update': count_update
             }
             if (count_insert == 0 && type == 'scrap_start') {
                 to_be_update_data['scrap_status'] = 1;
-                date_wise_stats[ today_date ] = {
+                date_wise_stats[today_date] = {
                     'insert': 0,
                     'update': 0
                 }
@@ -148,7 +162,7 @@ function update_scrap_stats(rec_id, type, callback) {
             to_be_update_data['date_wise_stats'] = date_wise_stats;
             conn_catalog_urls.update(where, {
                 $set: to_be_update_data
-            }, function (err, res) {
+            }, function(err, res) {
                 if (err) {
                     callback('error');
                     return true;
@@ -177,8 +191,7 @@ function get_price_history_and_log(exist_product, new_data) {
         price_log.push(price_log_text);
 
         var is_new_date_price = true;
-        if (price_history.length == 0) {
-        } else {
+        if (price_history.length == 0) {} else {
             for (var d in price_history) {
                 dd = price_history[d];
                 if (dd['date'] == PARSER.currentDate()) {
@@ -255,7 +268,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
     where = {
         website: website,
         unique: unique
-        // unique: 'B00B78P71Q'
+            // unique: 'B00B78P71Q'
     }
     var product_info = new_data;
     console.log('------------------------------------------------------------------------------');
@@ -269,7 +282,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    pg_scrap_db2_website_scrap_data.find(where, function (err, result) {
+    pg_scrap_db2_website_scrap_data.find(where, function(err, result) {
         if (err) {
             callback('Error Occurs');
             return true;
@@ -279,10 +292,10 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                 console.log('Product Not Exists');
                 if (new_data.price != '' && new_data.price > 0) {
                     product_info['price_history'] = [{
-                            date: PARSER.currentDate(),
-                            timestamp: PARSER.currentTimestamp(),
-                            price: new_data.price * 1
-                        }];
+                        date: PARSER.currentDate(),
+                        timestamp: PARSER.currentTimestamp(),
+                        price: new_data.price * 1
+                    }];
                     price_log_text = PARSER.currentDate() + '__' + PARSER.currentDateTimeDay() + '____' + new_data.price;
                     product_info['price_log'] = [price_log_text];
                 }
@@ -290,8 +303,8 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                 console.log('Going To Insert');
                 console.log(product_info);
                 var insert_new_product = new pg_scrap_db2_website_scrap_data(product_info);
-                insert_new_product.save(function () {
-                    update_scrap_stats(u_rec_id, 'insert', function (aa) {
+                insert_new_product.save(function() {
+                    update_scrap_stats(u_rec_id, 'insert', function(aa) {
                         console.log('1 INSERT :: ' + aa);
                         callback('Products Inserted');
                         return true;
@@ -318,12 +331,12 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                 console.log('Going To Update ---SCRAP_DB2');
                 console.log(to_be_update_data);
                 console.log(exist_product._id)
-                pg_scrap_db2_website_scrap_data.update(where, {'$set': to_be_update_data}, function (err, res) {
+                pg_scrap_db2_website_scrap_data.update(where, { '$set': to_be_update_data }, function(err, res) {
                     if (err) {
                         callback('Products Updated');
                         return true;
                     } else {
-                        update_scrap_stats(u_rec_id, 'update', function (aa) {
+                        update_scrap_stats(u_rec_id, 'update', function(aa) {
                             console.log('1 UPdated :: ' + aa);
                             var new_data_price = new_data.price;
                             var exist_product_price = exist_product.get('price');
@@ -332,8 +345,8 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                 var product_name = exist_product.get('name');
                                 var product_url = exist_product.get('href');
                                 var product_img = exist_product.get('img');
-                                var subject = 'Price down alert - From '+exist_product_price+' to '+new_data_price+'';
-                                _.forEach(genie_alerts, function (val, key) {
+                                var subject = 'Price down alert - From ' + exist_product_price + ' to ' + new_data_price + '';
+                                _.forEach(genie_alerts, function(val, key) {
                                     var email = val.email_id;
                                     var website = val.website;
                                     var from = 'noreply@pricegenie.co';
@@ -341,12 +354,45 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                         from = 'noreply@fashioniq.in';
                                     }
                                     var current_date = moment().unix();
-                                    var payload = {email: email, time: current_date};
+                                    var payload = { email: email, time: current_date };
                                     var secret = 'Pricegenie';
-                                    token_encode(payload, secret, function (token) {
+                                    conn_user.findOne({ email: email }, function(err, user) {
+                                        if (err) {
+                                            console.log(err)
+                                        } else if (!user) {
+                                            console.log('not found');
+                                        } else {
+                                            conn_gcms.findOne({ user_id: user._id.toString() }, function(error, resp) {
+                                                if (error) {
+                                                    console.log(err)
+                                                } else if (!resp) {
+                                                    console.log('not found');
+                                                } else {
+                                                    var push_token = resp.get('reg_id');
+                                                    var payload = { product_id: exist_product._id };
+                                                    var notify = {
+                                                        title: 'Price down alert',
+                                                        body: product_name + ' from ' + exist_product_price + 'rs to ' + new_data_price + 'rs',
+                                                        click_action: "FCM_PLUGIN_ACTIVITY",
+                                                        "color": "#f95b2c"
+                                                    };
+                                                    var serverKey = 'AAAAoDVUotg:APA91bGSSsdmlLFx9ihoi3Kq7XMrYr24pMKfL93j4M9p7qNg8eWeqYWmp9HSfbUhaqjZxEC9uvrXQ6_Fgs5mKUcov2xNKHqkKxUNx9Bd7rjhYJ2g7472Z-DxkPLZYv4cny8wah4w1LON';
+                                                    PUSH_MESSAGE.push_notification(serverKey, push_token, payload, notify, function(error, response) {
+                                                        if (error == 'error') {
+                                                            console.log(response);
+                                                        } else {
+                                                            console.log(response);
+                                                        }
+                                                    });
+                                                }
+                                            })
+                                        }
+                                    })
+
+                                    token_encode(payload, secret, function(token) {
                                         var token_link = 'http://pricegenie.co/my_genie_alerts.php?email=' + token;
                                         var html = '<html><head><style>td ,th{border-style: solid;border-color: grey;}</style></head><body><b>Hello</b><br><br>Greeting from Pricegenie. <br><br>Price is down.<br><br><a href=' + product_url + '><table style="width:100%"><tr align="center"><td colspan="4"><font size="5">' + product_name + '</font></td></tr><tr align="center"><th rowspan="2"><img src=' + product_img + ' alt="Smiley face" height="80" width="80"></th><th>Old price</th><th>New price</th><th rowspan="2"><button type="button" style="height:50px;width:auto">Buy now!</button></th></tr><tr align="center"><td>' + exist_product_price + '</td><td>' + new_data_price + '</td></tr></tr></table></a><br><br><a href="' + token_link + '">View all your Price Alerts</a></body></html>'
-                                        mail_alert(email, subject, 'template', from, html, function (response_msg, response_data, response) {
+                                        MAIL.mail_alert(email, subject, 'template', from, html, function(response_msg, response_data, response) {
                                             if (response) {
                                                 if (response.accepted) {
                                                     email_sent_status = 'sent';
@@ -364,7 +410,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                                     new_price: new_data_price
                                                 };
                                                 var insert_email_info = new conn_price_alerts_email_log(email_info);
-                                                insert_email_info.save(function (err, resp) {
+                                                insert_email_info.save(function(err, resp) {
                                                     if (err) {
                                                         console.log(err)
                                                     } else {
@@ -389,125 +435,6 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
         }
     });
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-//    conn_website_scrap_data.find( where, function( err, result ){
-//        if( err ){
-//            callback('Error Occurs');
-//            return true;
-//        }else{
-//            if( typeof result == 'undefined' || result.length == 0 ){
-//                console.log('Product Not Exists');
-//                if( new_data.price != '' && new_data.price > 0 ){
-//                    product_info['price_history'] = [{
-//                        date: PARSER.currentDate(),
-//                        timestamp: PARSER.currentTimestamp(),
-//                        price: new_data.price*1
-//                    }];
-//                    price_log_text = PARSER.currentDate()+'__'+PARSER.currentDateTimeDay()+'____'+new_data.price;
-//                    product_info['price_log'] = [price_log_text];
-//                }
-//                console.log("\n");
-//                console.log('Going To Insert');
-//                console.log( product_info );
-//                var insert_new_product  = new conn_website_scrap_data( product_info );
-//                insert_new_product.save( function(){
-//                    update_scrap_stats( u_rec_id, 'insert', function( aa ){
-//                        console.log('1 INSERT :: '+aa);
-//                        callback('Products Inserted');
-//                        return true;
-//                    });
-//                })
-//            }else{
-//                console.log('Product Already Exists');
-//                exist_product = result[0];
-//                console.log('-----------------------------exist product-------------------------------------------------');
-//                console.log( exist_product );
-//                console.log('--------------------------------------------------------------------------------------------------');
-//                console.log( exist_product );
-//                
-//                var exist_date = exist_product.get('date');
-//                var price_history = exist_product.get('price_history');
-//                if (typeof price_history == 'undefined' || !price_history || price_history == null) {
-//                    price_history = [];
-//                }
-//                var price_log = exist_product.get('price_log');
-//                if (typeof price_log == 'undefined' || !price_log || price_log == null) {
-//                    price_log = [];
-//                }
-//                
-//                if( new_data.price != '' && new_data.price > 0 ){
-//                    price_log_text = PARSER.currentDate()+'__'+PARSER.currentDateTimeDay()+'____'+new_data.price;
-//                    price_log.push( price_log_text );
-//                    
-//                    var is_new_date_price = true;
-//                    if( price_history.length == 0){
-//                    }else{
-//                        for( var d in price_history ){
-//                            dd = price_history[d];
-//                            if( dd['date'] ==  PARSER.currentDate() ){
-//                                is_new_date_price = false;
-//                                price_history[d]['date'] = PARSER.currentDate();
-//                                price_history[d]['timestamp'] = PARSER.currentTimestamp();
-//                                price_history[d]['price'] = new_data.price*1;
-//                            }
-//                        }
-//                    }
-//                    if( is_new_date_price == true ){
-//                        price_history.push({
-//                            date: PARSER.currentDate(),
-//                            timestamp: PARSER.currentTimestamp(),
-//                            price: new_data.price*1
-//                        });
-//                    }
-//                    if (price_history.length > 30) {
-//                        price_history.shift();
-//                    }
-//                    if (price_log.length > 20) {
-//                        price_log.shift();
-//                    }
-//                }
-//                to_be_update_data = {
-//                    date_of_birth : PARSER.currentIsoDate(),
-//                    price : new_data.price,
-//                    price_history: price_history,
-//                    price_log : price_log,
-//                    updated: 1,
-//                    time: PARSER.currentTimestamp(),
-//                    time_pretty: PARSER.currentIsoDate(),
-//                    date: PARSER.currentDate(),
-//                };
-//                console.log("\n");
-//                console.log('Going To Update');
-//                console.log( to_be_update_data );
-//                conn_website_scrap_data.update(where,{'$set' : to_be_update_data}, function (err, res) {
-//                    if( err ){
-//                        callback('Products Updated');
-//                        return true;
-//                    }else{
-//                        update_scrap_stats( u_rec_id, 'update', function( aa ){
-//                            console.log('1 UPdated :: '+aa);
-//                            callback('Products Updated');
-//                            return true;
-//                        });
-//                    }
-//                });
-//            }
-//        }
-//    })
-
-
-
-
-
-
-
-
-
-
-
 }
 
 function insert_or_update_products(u_rec_id, website, website_category, u_cat_id, u_sub_cat_id, scraped_products, callback) {
@@ -520,7 +447,7 @@ function insert_or_update_products(u_rec_id, website, website_category, u_cat_id
         product = scraped_products[0];
 
         scraped_products.splice(0, 1); //remove first product
-        add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub_cat_id, product, function (info) {
+        add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub_cat_id, product, function(info) {
             console.log(info);
             console.log('\n');
             console.log('\n');
@@ -556,7 +483,7 @@ function process_pagination_urls(u_rec_id, website, website_category, u_cat_id, 
         return true;
     } else {
         var page_urls = [];
-        _.each(urls, function (u, key) {
+        _.each(urls, function(u, key) {
             if (page_urls.length < count_process) {
                 page_urls.push(u);
                 urls.splice(key, 1);
@@ -564,11 +491,11 @@ function process_pagination_urls(u_rec_id, website, website_category, u_cat_id, 
         })
         if (page_urls.length > 0) {
             console.log("-------------------------------------------------------------------------------------------------------------------------------");
-            _.each(page_urls, function (u1, key1) {
+            _.each(page_urls, function(u1, key1) {
                 console.log('SCRAPING  URL :: ' + u1);
                 console.log("-------------------------------------------------------------------------------------------------------------------------------");
                 scraper_master_website = get_website_scraper_object(website);
-                scraper_master_website.get_page_products(u1, function (res_type, res_data) {
+                scraper_master_website.get_page_products(u1, function(res_type, res_data) {
                     console.log("---------------------------------------------------------------------Scraping Status : " + res_type);
                     if (res_type == 'error') {
                         console.log("---------------------------------------------------------------------As Error Occurs Calling Recursivley");
@@ -577,15 +504,15 @@ function process_pagination_urls(u_rec_id, website, website_category, u_cat_id, 
                         console.log("---------------------------------------------------------------------Count products scraped :: " + res_data.length);
                         if (res_data.length > 0) {
                             console.log("---------------------------------------------------------------------Going to Insert Or Update Scraped Products");
-                            insert_or_update_products(u_rec_id, website, website_category, u_cat_id, u_sub_cat_id, res_data, function () {
+                            insert_or_update_products(u_rec_id, website, website_category, u_cat_id, u_sub_cat_id, res_data, function() {
                                 process_pagination_urls(u_rec_id, website, website_category, u_cat_id, u_sub_cat_id, urls, count_process, callback);
                             });
                             ///i am stucked here 
-//                            _.each( res_data, function( u2 ){
-//                                add_update_product( u_rec_id, website, website_category, u2, function(){
-//                                    
-//                                });
-//                            })
+                            //                            _.each( res_data, function( u2 ){
+                            //                                add_update_product( u_rec_id, website, website_category, u2, function(){
+                            //                                    
+                            //                                });
+                            //                            })
                         } else {
                             process_pagination_urls(u_rec_id, website, website_category, u_cat_id, u_sub_cat_id, urls, count_process, callback);
                         }
@@ -609,7 +536,7 @@ function start_scrapping(pending_catalog_urls) {
         console.log('*************************************************************************');
 
 
-        unwantedProduct(60, 5, function (response_msg, response_data) {
+        unwantedProduct(60, 5, function(response_msg, response_data) {
             if (response_msg == 'error') {
                 console.log(response_data);
                 initiateScrapping();
@@ -625,8 +552,7 @@ function start_scrapping(pending_catalog_urls) {
         to_be_scrap = pending_catalog_urls[0];
         pending_catalog_urls.splice(0, 1); // remove the url from pending_catalog_urls list
         //}
-        if (to_be_scrap == false) {
-        } else {
+        if (to_be_scrap == false) {} else {
             console.log("---------------------------------------------------------------------Pending url going to process is below ");
             var u_url = to_be_scrap.get('url');
             var u_website = to_be_scrap.get('website');
@@ -640,7 +566,7 @@ function start_scrapping(pending_catalog_urls) {
             if (!u_sub_cat_id) {
                 u_sub_cat_id = '';
             }
-            update_scrap_stats(u_rec_id, 'scrap_start', function (aa) {
+            update_scrap_stats(u_rec_id, 'scrap_start', function(aa) {
                 console.log('to_be_scrap u_url : ' + u_url);
                 console.log('to_be_scrap u_website : ' + u_website);
                 console.log('to_be_scrap u_website_category : ' + u_website_category);
@@ -649,7 +575,7 @@ function start_scrapping(pending_catalog_urls) {
                 console.log("---------------------------------------------------------------------STEP :: Analysing Catalog Url Response");
 
                 scraper_master_website = get_website_scraper_object(u_website);
-                scraper_master_website.analyse_catalog_url(1, u_url, u_website_category, jquery_path, function (response_type, response_data) {
+                scraper_master_website.analyse_catalog_url(1, u_url, u_website_category, jquery_path, function(response_type, response_data) {
                     if (response_type == 'error') {
                         console.log("---------------------------------------------------------------------ERROR OCCURS");
                         start_scrapping(pending_catalog_urls);
@@ -662,7 +588,7 @@ function start_scrapping(pending_catalog_urls) {
                         }
                         console.log("---------------------------------------------------------------------Pagination Urls Will Be Processed :: " + pagination_urls.length);
                         if (pagination_urls.length > 0) {
-                            process_pagination_urls(u_rec_id, u_website, u_website_category, u_cat_id, u_sub_cat_id, pagination_urls, CONFIG_scrap_pages_at_a_time, function (data) {
+                            process_pagination_urls(u_rec_id, u_website, u_website_category, u_cat_id, u_sub_cat_id, pagination_urls, CONFIG_scrap_pages_at_a_time, function(data) {
                                 console.log(data);
                                 //console.log('>>>>');
                                 //process.exit(0);
@@ -684,28 +610,27 @@ function start_scrapping(pending_catalog_urls) {
 
 
 function initiateScrapping() {
-//    w = {
-//        '_id' : '5694e413c23429483522b03c'
-//    } 
+    //    w = {
+    //        '_id' : '5694e413c23429483522b03c'
+    //    } 
     w = {
         'website': MASTER_WEBSITE,
         '$or': [
-            {'scrap_status': 0},
-            {'scrap_status': {'$exists': false}},
+            { 'scrap_status': 0 },
+            { 'scrap_status': { '$exists': false } },
         ]
     }
-    conn_catalog_urls.find(w, function (err, urls) {
+    conn_catalog_urls.find(w, function(err, urls) {
         if (typeof urls == 'undefined' || urls.length == 0) {
             console.log('no urls found------ reseting all urls');
             conn_catalog_urls.update({
                 'website': MASTER_WEBSITE,
             }, {
-                $set: {'scrap_status': 0}
+                $set: { 'scrap_status': 0 }
             }, {
                 multi: true
-            }, function (err, res) {
-                if (err) {
-                } else {
+            }, function(err, res) {
+                if (err) {} else {
                     initiateScrapping();
                     console.log('update hua hau');
                 }
@@ -721,7 +646,7 @@ function unwantedProduct(days, no_of_times, callback) {
     var myNegInt = Math.abs(days) * (-1);
     var last_date = moment().add(myNegInt, 'days').unix();
     if (days && no_of_times) {
-        pg_scrap_db2_website_scrap_data.remove({$where: "this.price_log && this.price_log.length <= " + no_of_times + "", "price_history.timestamp": {$lte: last_date}}, function (err, products) {
+        pg_scrap_db2_website_scrap_data.remove({ $where: "this.price_log && this.price_log.length <= " + no_of_times + "", "price_history.timestamp": { $lte: last_date } }, function(err, products) {
             if (err) {
                 callback("error", err);
             } else {
@@ -735,33 +660,6 @@ function unwantedProduct(days, no_of_times, callback) {
     }
 }
 
-function mail_alert(email, subject, template, from, html, callback) {
-    var mandrill_client = new mandrill.Mandrill('Ca4nS3QStEcpvZdk9iMh0Q');
-    var mailer = nodemailer.createTransport(smtpTransport({
-        host: 'smtp.sendgrid.net',
-        port: 25,
-        auth: {
-            user: 'apikey',
-            pass: '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'
-        }
-    }));
-    mailer.sendMail({
-        from: from,
-        to: email,
-        subject: subject,
-        template: 'template',
-        html: html
-    }, function (error, response) {
-        if (error) {
-            console.log(error);
-            callback('1', 'messsage not send successfully');
-        }
-        console.log('mail sent to ' + email);
-        callback('0', 'messsage send successfully', response);
-        mailer.close();
-    });
-}
-
 function token_encode(payload, secret, callback) {
     if (payload && secret) {
         //encode
@@ -770,8 +668,9 @@ function token_encode(payload, secret, callback) {
     } else {
         callback('');
     }
-}
+};
 
 initiateScrapping();
+
 
 module.exports = router;
