@@ -9,6 +9,7 @@ var hbs = require('nodemailer-express-handlebars');
 var smtpTransport = require('nodemailer-smtp-transport');
 var mandrill = require('mandrill-api/mandrill');
 var jwt = require('jwt-simple');
+var FCM = require('fcm-node');
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
 var conn_pg_scrap_db1 = mongoose.createConnection('mongodb://127.0.0.1/scrap_db1');
@@ -41,6 +42,18 @@ var schema_price_alerts_email_log = mongoose.Schema({}, {
     collection: 'price_alerts_email_log'
 });
 var conn_price_alerts_email_log = conn_pg_scrap_db2.model('price_alerts_email_log', schema_price_alerts_email_log);
+
+var users_schema = mongoose.Schema({}, {
+    strict: false,
+    collection: 'users'
+});
+var conn_user = conn_pg_scrap_db2.model('users', users_schema);
+
+var gcms_schema = mongoose.Schema({}, {
+    strict: false,
+    collection: 'gcms'
+});
+var conn_gcms = conn_pg_scrap_db2.model('gcms', gcms_schema);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var _ = require('underscore');
@@ -254,8 +267,8 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
     }
     where = {
         website: website,
-        unique: unique
-        // unique: 'B00B78P71Q'
+        // unique: unique
+        unique: 'B00B78P71Q'
     }
     var product_info = new_data;
     console.log('------------------------------------------------------------------------------');
@@ -328,13 +341,16 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                             var new_data_price = new_data.price;
                             var exist_product_price = exist_product.get('price');
                             var genie_alerts = exist_product.get('genie_alerts');
-                            if ((new_data_price < exist_product_price) && genie_alerts) {
+                            // if ((new_data_price < exist_product_price) && genie_alerts) {
+                                                            if ((11 < 12) && genie_alerts) {
+
                                 var product_name = exist_product.get('name');
                                 var product_url = exist_product.get('href');
                                 var product_img = exist_product.get('img');
                                 var subject = 'Price down alert - From '+exist_product_price+' to '+new_data_price+'';
                                 _.forEach(genie_alerts, function (val, key) {
                                     var email = val.email_id;
+                                    console.log(email)
                                     var website = val.website;
                                     var from = 'noreply@pricegenie.co';
                                     if (website == 'fashionq') {
@@ -343,44 +359,83 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                     var current_date = moment().unix();
                                     var payload = {email: email, time: current_date};
                                     var secret = 'Pricegenie';
-                                    token_encode(payload, secret, function (token) {
-                                        var token_link = 'http://pricegenie.co/my_genie_alerts.php?email=' + token;
-                                        var html = '<html><head><style>td ,th{border-style: solid;border-color: grey;}</style></head><body><b>Hello</b><br><br>Greeting from Pricegenie. <br><br>Price is down.<br><br><a href=' + product_url + '><table style="width:100%"><tr align="center"><td colspan="4"><font size="5">' + product_name + '</font></td></tr><tr align="center"><th rowspan="2"><img src=' + product_img + ' alt="Smiley face" height="80" width="80"></th><th>Old price</th><th>New price</th><th rowspan="2"><button type="button" style="height:50px;width:auto">Buy now!</button></th></tr><tr align="center"><td>' + exist_product_price + '</td><td>' + new_data_price + '</td></tr></tr></table></a><br><br><a href="' + token_link + '">View all your Price Alerts</a></body></html>'
-                                        mail_alert(email, subject, 'template', from, html, function (response_msg, response_data, response) {
-                                            if (response) {
-                                                if (response.accepted) {
-                                                    email_sent_status = 'sent';
-                                                } else {
-                                                    email_sent_status = 'not sent';
-                                                }
-                                                var email_info = {
-                                                    email_sent_status: email_sent_status,
-                                                    email_sent_response: response.response,
-                                                    scrap_product_id: exist_product._id,
-                                                    website: exist_product.get('website'),
-                                                    time: PARSER.currentIsoDate(),
-                                                    email_id: email,
-                                                    old_price: exist_product_price,
-                                                    new_price: new_data_price
-                                                };
-                                                var insert_email_info = new conn_price_alerts_email_log(email_info);
-                                                insert_email_info.save(function (err, resp) {
-                                                    if (err) {
-                                                        console.log(err)
-                                                    } else {
-                                                        console.log(resp);
-                                                    }
-                                                })
-                                            }
-                                        });
-                                    });
+conn_user.findOne({email:'mohit@excellencetechnologies.in'},function(err,user){
+    if(err){
+        console.log(err)
+    }else{
+        console.log('==========================')
+        // console.log(user)
+        console.log('==========================')
+        console.log(typeof user._id.toString(),user._id)
+        conn_gcms.findOne({user_id:user._id.toString()},function(error,resp){
+            if(error){
+                console.log(err)
+            }else if (!resp){
+                console.log('not found');
+            }else{
+                console.log('+++++++++++++++++++++++++++++')
+                console.log(resp)
+                // var push_token = resp.get('reg_id');
+                var payload={product_id: exist_product._id};
+                var notify={title:subject, body: product_name};
+                // var push_token= 'dXb1vqI4WHw:APA91bFZwypPLnvATyS2J02unALALhzP18VVpozgM2zGwfCXFTY9SxxKdg1EExBEdYUP2Rsm9FkTaVZu30LImO5R-rLrSc9q2DPhJIOUm9oU9V8Fo4P96gFSMdobHU9xhWVioN3ZqVJW'; 
+                 var serverKey = 'AAAAoDVUotg:APA91bGSSsdmlLFx9ihoi3Kq7XMrYr24pMKfL93j4M9p7qNg8eWeqYWmp9HSfbUhaqjZxEC9uvrXQ6_Fgs5mKUcov2xNKHqkKxUNx9Bd7rjhYJ2g7472Z-DxkPLZYv4cny8wah4w1LON';
+                  push_notification(serverKey, push_token,payload,notify, function (error,response) {
+                                        if(error == 'error'){
+                                            console.log(response);
+                                        }else{
+                                            console.log(response);
+                                        }
+
+                                    });   
+            console.log('+++++++++++++++++++++++++++++')
+            }
+            
+        })
+    }
+})
+
+                              
+
+
+                                    // token_encode(payload, secret, function (token) {
+                                    //     var token_link = 'http://pricegenie.co/my_genie_alerts.php?email=' + token;
+                                    //     var html = '<html><head><style>td ,th{border-style: solid;border-color: grey;}</style></head><body><b>Hello</b><br><br>Greeting from Pricegenie. <br><br>Price is down.<br><br><a href=' + product_url + '><table style="width:100%"><tr align="center"><td colspan="4"><font size="5">' + product_name + '</font></td></tr><tr align="center"><th rowspan="2"><img src=' + product_img + ' alt="Smiley face" height="80" width="80"></th><th>Old price</th><th>New price</th><th rowspan="2"><button type="button" style="height:50px;width:auto">Buy now!</button></th></tr><tr align="center"><td>' + exist_product_price + '</td><td>' + new_data_price + '</td></tr></tr></table></a><br><br><a href="' + token_link + '">View all your Price Alerts</a></body></html>'
+                                    //     mail_alert(email, subject, 'template', from, html, function (response_msg, response_data, response) {
+                                    //         if (response) {
+                                    //             if (response.accepted) {
+                                    //                 email_sent_status = 'sent';
+                                    //             } else {
+                                    //                 email_sent_status = 'not sent';
+                                    //             }
+                                    //             var email_info = {
+                                    //                 email_sent_status: email_sent_status,
+                                    //                 email_sent_response: response.response,
+                                    //                 scrap_product_id: exist_product._id,
+                                    //                 website: exist_product.get('website'),
+                                    //                 time: PARSER.currentIsoDate(),
+                                    //                 email_id: email,
+                                    //                 old_price: exist_product_price,
+                                    //                 new_price: new_data_price
+                                    //             };
+                                    //             var insert_email_info = new conn_price_alerts_email_log(email_info);
+                                    //             insert_email_info.save(function (err, resp) {
+                                    //                 if (err) {
+                                    //                     console.log(err)
+                                    //                 } else {
+                                    //                     console.log(resp);
+                                    //                 }
+                                    //             })
+                                    //         }
+                                    //     });
+                                    // });
                                 });
-                                console.log('email sent successfully');
-                                callback('Products Updated');
-                                return true;
+                                // console.log('email sent successfully');
+                                // callback('Products Updated');
+                                // return true;
                             } else {
-                                callback('Products Updated');
-                                return true;
+                                // callback('Products Updated');
+                                // return true;
                             }
                         });
                     }
@@ -609,7 +664,7 @@ function start_scrapping(pending_catalog_urls) {
         console.log('*************************************************************************');
 
 
-        unwantedProduct(60, 5, function (response_msg, response_data) {
+        unwantedProduct(10, 5, function (response_msg, response_data) {
             if (response_msg == 'error') {
                 console.log(response_data);
                 initiateScrapping();
@@ -760,7 +815,7 @@ function mail_alert(email, subject, template, from, html, callback) {
         callback('0', 'messsage send successfully', response);
         mailer.close();
     });
-}
+};
 
 function token_encode(payload, secret, callback) {
     if (payload && secret) {
@@ -770,8 +825,25 @@ function token_encode(payload, secret, callback) {
     } else {
         callback('');
     }
-}
+};
 
+function push_notification(serverKey, token,payload,notify, callback) {
+    var fcm = new FCM(serverKey);
+    var message = {
+        to: token,
+        collapse_key: 'your_collapse_key',
+        notification: notify,
+        data: payload,
+    };
+    fcm.send(message, function (err, response) {
+        if (err) {
+            callback('error',err);
+        } else {
+         callback('success',response)
+        }
+    });
+};
 initiateScrapping();
+
 
 module.exports = router;
