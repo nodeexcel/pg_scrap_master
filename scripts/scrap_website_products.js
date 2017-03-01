@@ -55,6 +55,13 @@ var gcms_schema = mongoose.Schema({}, {
 });
 var conn_gcms = conn_pg_scrap_db2.model('gcms', gcms_schema);
 
+var schema_log_push_notification = mongoose.Schema({}, {
+    strict: false,
+    collection: 'log_push_notification'
+});
+var conn_log_push_notification = conn_pg_scrap_db2.model('log_push_notification', schema_log_push_notification);
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var _ = require('underscore');
 //*******************************************************************************************************
@@ -358,7 +365,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                     var secret = 'Pricegenie';
                                     conn_user.findOne({ email: email }, function(err, user) {
                                         if (err) {
-                                            console.log(err)
+                                            console.log(err);
                                         } else if (!user) {
                                             console.log('not found');
                                         } else {
@@ -367,12 +374,19 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                                     console.log(err)
                                                 } else if (!resp) {
                                                     console.log('not found');
+                                                } else if (!resp.get('reg_id') && resp.get('token') == null) {
+                                                    console.log('token null');
                                                 } else {
-                                                    var push_token = resp.get('reg_id');
+                                                    if (resp.get('reg_id')) {
+                                                        var push_token = resp.get('reg_id');
+                                                    } else {
+                                                        var push_token = resp.get('token');
+                                                    }
+
                                                     var payload = { product_id: exist_product._id };
                                                     var notify = {
                                                         title: 'Price down alert',
-                                                        body: product_name + ' from ' + exist_product_price + 'rs to ' + new_data_price + 'rs',
+                                                        body: product_name + ' from Rs.' + exist_product_price + ' to Rs.' + new_data_price + 'rs',
                                                         click_action: "FCM_PLUGIN_ACTIVITY",
                                                         "color": "#f95b2c"
                                                     };
@@ -381,7 +395,31 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                                         if (error == 'error') {
                                                             console.log(response);
                                                         } else {
-                                                            console.log(response);
+                                                            var parse_response = JSON.parse(response);
+                                                            if (parse_response.success == 1) {
+                                                                push_sent_status = 'sent';
+                                                            } else {
+                                                                push_sent_status = 'not sent';
+                                                            }
+
+                                                            var push_info = {
+                                                                push_sent_status: push_sent_status,
+                                                                push_sent_response: response,
+                                                                scrap_product_id: exist_product._id,
+                                                                website: exist_product.get('website'),
+                                                                time: PARSER.currentIsoDate(),
+                                                                email_id: email,
+                                                                old_price: exist_product_price,
+                                                                new_price: new_data_price
+                                                            };
+                                                            var insert_push_info = new conn_log_push_notification(push_info);
+                                                            insert_push_info.save(function(err, resp) {
+                                                                if (err) {
+                                                                    console.log(err)
+                                                                } else {
+                                                                    console.log(resp);
+                                                                }
+                                                            })
                                                         }
                                                     });
                                                 }
