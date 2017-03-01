@@ -374,12 +374,19 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                                     console.log(err)
                                                 } else if (!resp) {
                                                     console.log('not found');
+                                                } else if (!resp.get('reg_id') && resp.get('token') == null) {
+                                                    console.log('token null');
                                                 } else {
-                                                    var push_token = resp.get('reg_id');
+                                                    if (resp.get('reg_id')) {
+                                                        var push_token = resp.get('reg_id');
+                                                    } else {
+                                                        var push_token = resp.get('token');
+                                                    }
+
                                                     var payload = { product_id: exist_product._id };
                                                     var notify = {
                                                         title: 'Price down alert',
-                                                        body: product_name + ' from ' + exist_product_price + 'rs to ' + new_data_price + 'rs',
+                                                        body: product_name + ' from Rs.' + exist_product_price + ' to Rs.' + new_data_price + 'rs',
                                                         click_action: "FCM_PLUGIN_ACTIVITY",
                                                         "color": "#f95b2c"
                                                     };
