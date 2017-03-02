@@ -365,16 +365,76 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                     var secret = 'Pricegenie';
                                     conn_user.findOne({ email: email }, function(err, user) {
                                         if (err) {
+                                            var push_info = {
+                                                err: err,
+                                                data: '1'
+                                            }
+                                            var insert_push_info = new conn_log_push_notification(push_info);
+                                            insert_push_info.save(function(err, resp) {
+                                                if (err) {
+                                                    console.log(err)
+                                                } else {
+                                                    console.log(resp);
+                                                }
+                                            })
                                             console.log(err);
                                         } else if (!user) {
+                                            var push_info = {
+                                                err: 'not found',
+                                                data: '2'
+                                            }
+                                            var insert_push_info = new conn_log_push_notification(push_info);
+                                            insert_push_info.save(function(err, resp) {
+                                                if (err) {
+                                                    console.log(err)
+                                                } else {
+                                                    console.log(resp);
+                                                }
+                                            })
                                             console.log('not found');
                                         } else {
                                             conn_gcms.findOne({ user_id: user._id.toString() }, function(error, resp) {
                                                 if (error) {
+                                                    var push_info = {
+                                                        err: error,
+                                                        data: '3'
+                                                    }
+                                                    var insert_push_info = new conn_log_push_notification(push_info);
+                                                    insert_push_info.save(function(err, resp) {
+                                                        if (err) {
+                                                            console.log(err)
+                                                        } else {
+                                                            console.log(resp);
+                                                        }
+                                                    })
                                                     console.log(err)
                                                 } else if (!resp) {
+                                                    var push_info = {
+                                                        err: 'not found',
+                                                        data: '4'
+                                                    }
+                                                    var insert_push_info = new conn_log_push_notification(push_info);
+                                                    insert_push_info.save(function(err, resp) {
+                                                        if (err) {
+                                                            console.log(err)
+                                                        } else {
+                                                            console.log(resp);
+                                                        }
+                                                    })
                                                     console.log('not found');
-                                                } else if (!resp.get('reg_id') && resp.get('token') == null) {
+                                                } else if (!resp.get('reg_id') && resp.get('token') == null && !resp.get('token')) {
+                                                    var push_info = {
+                                                        err: 'token null',
+                                                        data: '5'
+                                                    }
+                                                    var insert_push_info = new conn_log_push_notification(push_info);
+                                                    insert_push_info.save(function(err, resp) {
+                                                        if (err) {
+                                                            console.log(err)
+                                                        } else {
+                                                            console.log(resp);
+                                                        }
+                                                    })
                                                     console.log('token null');
                                                 } else {
                                                     if (resp.get('reg_id')) {
@@ -393,6 +453,18 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                                     var serverKey = 'AAAAoDVUotg:APA91bGSSsdmlLFx9ihoi3Kq7XMrYr24pMKfL93j4M9p7qNg8eWeqYWmp9HSfbUhaqjZxEC9uvrXQ6_Fgs5mKUcov2xNKHqkKxUNx9Bd7rjhYJ2g7472Z-DxkPLZYv4cny8wah4w1LON';
                                                     PUSH_MESSAGE.push_notification(serverKey, push_token, payload, notify, function(error, response) {
                                                         if (error == 'error') {
+                                                            var push_info = {
+                                                                err: error,
+                                                                data: '6'
+                                                            }
+                                                            var insert_push_info = new conn_log_push_notification(push_info);
+                                                            insert_push_info.save(function(err, resp) {
+                                                                if (err) {
+                                                                    console.log(err)
+                                                                } else {
+                                                                    console.log(resp);
+                                                                }
+                                                            })
                                                             console.log(response);
                                                         } else {
                                                             var parse_response = JSON.parse(response);
