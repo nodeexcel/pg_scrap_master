@@ -169,6 +169,7 @@ var scrap_catalog = {
                     } else {
                         return_price_text = return_price_text - cashback;
                     }
+                    
                 }
             }
             if (return_price_text == '' && typeof div['actual_price'] != 'undefined' && div['actual_price'] != '') {
