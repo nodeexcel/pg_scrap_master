@@ -10,7 +10,7 @@ module.exports = {
     get_page_products: function (url, callback) {
         parser_aa.get_html(url, function (response_type, response_data) {
             if (response_type == 'error') {
-                callback( 'error', response_data );
+                callback('error', response_data);
             } else {
                 var products = [];
 
@@ -32,7 +32,7 @@ module.exports = {
                         products.push(product);
                     });
                 }
-                callback( 'success', products );
+                callback('success', products);
             }
         })
     },
@@ -182,4 +182,3 @@ module.exports = {
         }
     }
 }
-
