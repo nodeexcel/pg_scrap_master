@@ -158,6 +158,19 @@ var scrap_catalog = {
         } else if (website.indexOf('paytm') != -1) {
             if (typeof div['offer_price'] != 'undefined' && div['offer_price'] != '') {
                 return_price_text = div['offer_price'];
+                console.log('actual_price', return_price_text)
+                console.log('cashback', div['tag'])
+                if (div['tag']) {
+                    cashback = generic_function.getCleanNumber(div['tag']);
+                    if (/[0-9]*\.?[0-9]+%/.test(div['tag'])) {
+                        if (isNaN(parseInt(cashback)) == false) {
+                            return_price_text = return_price_text - (return_price_text * cashback) / 100;
+                        }
+                    } else {
+                        return_price_text = return_price_text - cashback;
+                    }
+
+                }
             }
             if (return_price_text == '' && typeof div['actual_price'] != 'undefined' && div['actual_price'] != '') {
                 return_price_text = div['actual_price'];
