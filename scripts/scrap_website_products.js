@@ -350,7 +350,6 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                             var genie_alerts = exist_product.get('genie_alerts');
                             if ((new_data_price < exist_product_price) && genie_alerts) {
                                 var product_name = exist_product.get('name');
-                                var product_url = exist_product.get('href');
                                 var product_img = exist_product.get('img');
                                 var subject = 'Price down alert - From ' + exist_product_price + ' to ' + new_data_price + '';
                                 _.forEach(genie_alerts, function(val, key) {
@@ -430,8 +429,9 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                     token_encode(payload, secret, function(token) {
                                         var token_link = 'http://pricegenie.co/my_genie_alerts.php?email=' + token;
                                         var website = exist_product.get('website');
-                                        product_url = GENERIC.getAffiliateUrl(website, product_url);
-                                        var html = '<html><head><style>td ,th{border-style: solid;border-color: grey;}</style></head><body><b>Hello</b><br><br>Greeting from Pricegenie. <br><br>Price is down.<br><br><a href=' + product_url + '><table style="width:100%"><tr align="center"><td colspan="4"><font size="5">' + product_name + '</font></td></tr><tr align="center"><th rowspan="2"><img src=' + product_img + ' alt="Smiley face" height="80" width="80"></th><th>Old price</th><th>New price</th><th rowspan="2"><button type="button" style="height:50px;width:auto">Buy now!</button></th></tr><tr align="center"><td>' + exist_product_price + '</td><td>' + new_data_price + '</td></tr></tr></table></a><br><br><a href="' + token_link + '">View all your Price Alerts</a></body></html>'
+                                         var product_url = exist_product.get('href');
+                                        var product_url_aff = GENERIC.getAffiliateUrl(website, product_url);
+                                        var html = '<html><head><style>td ,th{border-style: solid;border-color: grey;}</style></head><body><b>Hello</b><br><br>Greeting from Pricegenie. <br><br>Price is down.<br><br><a href=' + product_url_aff + '><table style="width:100%"><tr align="center"><td colspan="4"><font size="5">' + product_name + '</font></td></tr><tr align="center"><th rowspan="2"><img src=' + product_img + ' alt="Smiley face" height="80" width="80"></th><th>Old price</th><th>New price</th><th rowspan="2"><button type="button" style="height:50px;width:auto">Buy now!</button></th></tr><tr align="center"><td>' + exist_product_price + '</td><td>' + new_data_price + '</td></tr></tr></table></a><br><br><a href="' + token_link + '">View all your Price Alerts</a></body></html>'
                                         MAIL.mail_alert(email, subject, 'template', from, html, function(response_msg, response_data, response) {
                                             if (response) {
                                                 if (response.accepted) {
