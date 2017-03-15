@@ -133,6 +133,7 @@ module.exports = {
         return ret;
     },
     getCleanNumber: function (price) {
+        price = price.toString();
         if (price && price != '' && price != null) {
             price = price.replace(/[^\d.]/g, '');
             if (price.indexOf('.') == 0) {
