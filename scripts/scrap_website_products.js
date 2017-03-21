@@ -429,8 +429,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                     token_encode(payload, secret, function(token) {
                                         var token_link = 'http://pricegenie.co/my_genie_alerts.php?email=' + token;
                                         var website = exist_product.get('website');
-                                         var product_url = exist_product.get('href');
-                                        var product_url_aff = GENERIC.getAffiliateUrl(website, product_url);
+                                        var product_url_aff = GENERIC.getAffiliateUrl(website, exist_product.get('href'));
                                         var html = '<html><head><style>td ,th{border-style: solid;border-color: grey;}</style></head><body><b>Hello</b><br><br>Greeting from Pricegenie. <br><br>Price is down.<br><br><a href=' + product_url_aff + '><table style="width:100%"><tr align="center"><td colspan="4"><font size="5">' + product_name + '</font></td></tr><tr align="center"><th rowspan="2"><img src=' + product_img + ' alt="Smiley face" height="80" width="80"></th><th>Old price</th><th>New price</th><th rowspan="2"><button type="button" style="height:50px;width:auto">Buy now!</button></th></tr><tr align="center"><td>' + exist_product_price + '</td><td>' + new_data_price + '</td></tr></tr></table></a><br><br><a href="' + token_link + '">View all your Price Alerts</a></body></html>'
                                         MAIL.mail_alert(email, subject, 'template', from, html, function(response_msg, response_data, response) {
                                             if (response) {
@@ -547,10 +546,9 @@ function process_pagination_urls(u_rec_id, website, website_category, u_cat_id, 
                             insert_or_update_products(u_rec_id, website, website_category, u_cat_id, u_sub_cat_id, res_data, function() {
                                 process_pagination_urls(u_rec_id, website, website_category, u_cat_id, u_sub_cat_id, urls, count_process, callback);
                             });
-                            ///i am stucked here 
+                            ///i am stucked here
                             //                            _.each( res_data, function( u2 ){
                             //                                add_update_product( u_rec_id, website, website_category, u2, function(){
-                            //                                    
                             //                                });
                             //                            })
                         } else {
@@ -652,7 +650,7 @@ function start_scrapping(pending_catalog_urls) {
 function initiateScrapping() {
     //    w = {
     //        '_id' : '5694e413c23429483522b03c'
-    //    } 
+    //    }
     w = {
         'website': MASTER_WEBSITE,
         '$or': [
@@ -676,7 +674,7 @@ function initiateScrapping() {
                 }
             });
         } else {
-            //urls = _.first( urls , 5);        
+            //urls = _.first( urls , 5);
             start_scrapping(urls);
         }
     })
