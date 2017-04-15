@@ -1478,5 +1478,14 @@ var scrap_catalog = {
         }
         return model;
     },
+    getPrime: function(website, div) {
+        is_prime = '';
+        if (div.find('.s-align-text-bottom .a-icon-alt').text()) {
+            is_prime = 1;
+        } else {
+            is_prime = 0;
+        }
+        return is_prime;
+    },
 };
 module.exports = scrap_catalog;
