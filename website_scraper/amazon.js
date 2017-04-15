@@ -23,9 +23,7 @@ module.exports = {
                         image = scraper_catalog_products.getImage( module_website, jQuery(this) );
                         href = scraper_catalog_products.getHref( module_website, jQuery(this) );
                         is_prime = scraper_catalog_products.getPrime( module_website, jQuery(this) );
-                        console.log('________________________________')
-                        console.log(is_prime)
-                        console.log('+++++++++++++++++++++++++++++++')
+                        
                         product = {
                             name : name,
                             img : image,
