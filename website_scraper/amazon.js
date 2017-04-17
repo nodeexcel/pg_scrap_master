@@ -22,13 +22,15 @@ module.exports = {
                         price = scraper_catalog_products.getPriceText( module_website, jQuery(this) );
                         image = scraper_catalog_products.getImage( module_website, jQuery(this) );
                         href = scraper_catalog_products.getHref( module_website, jQuery(this) );
+                        is_prime = scraper_catalog_products.getPrime( module_website, jQuery(this) );
                         
                         product = {
                             name : name,
                             img : image,
                             href : href,
                             price : price,
-                            unique : unique
+                            unique : unique,
+                            is_prime : is_prime
                         }
                         products.push( product );
                     });

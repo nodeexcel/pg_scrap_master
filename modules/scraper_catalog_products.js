@@ -1478,5 +1478,16 @@ var scrap_catalog = {
         }
         return model;
     },
+    getPrime: function(website, div) {
+     var is_prime = '';
+     if (website.indexOf('amazon') != -1) {
+         if (div.find('.s-item-container .a-icon-prime').text()) {
+             is_prime = 1;
+         } else {
+             is_prime = 0;
+         }
+     }
+     return is_prime;
+    },
 };
 module.exports = scrap_catalog;
