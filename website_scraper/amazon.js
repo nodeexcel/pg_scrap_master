@@ -23,14 +23,16 @@ module.exports = {
                         image = scraper_catalog_products.getImage( module_website, jQuery(this) );
                         href = scraper_catalog_products.getHref( module_website, jQuery(this) );
                         is_prime = scraper_catalog_products.getPrime( module_website, jQuery(this) );
-                        
+                        is_cod = scraper_catalog_products.getCod( module_website,jQuery(this) );
+
                         product = {
                             name : name,
                             img : image,
                             href : href,
                             price : price,
                             unique : unique,
-                            is_prime : is_prime
+                            is_prime : is_prime,
+                            is_cod : is_cod
                         }
                         products.push( product );
                     });
