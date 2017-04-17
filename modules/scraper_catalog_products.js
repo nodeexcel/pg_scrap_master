@@ -1479,7 +1479,7 @@ var scrap_catalog = {
         return model;
     },
     getPrime: function(website, div) {
-     var is_prime = '';
+     var is_prime = 0;
      if (website.indexOf('amazon') != -1) {
          if (div.find('.s-item-container .a-icon-prime').text()) {
              is_prime = 1;
@@ -1490,7 +1490,7 @@ var scrap_catalog = {
      return is_prime;
     },
     getCod: function(website, div) {
-    var is_cod = '';
+    var is_cod = 0;
     if (website.indexOf('amazon') != -1) {
         if (div.find('.s-item-container .a-span5 .a-spacing-mini .a-spacing-none .a-color-secondary').text() == 'Cash on Delivery eligible.') {
             is_cod = 1;
