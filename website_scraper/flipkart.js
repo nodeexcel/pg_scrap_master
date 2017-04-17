@@ -54,12 +54,15 @@ module.exports = {
                     href = scraper_catalog_products.getHref(module_website, val);
                     unique = scraper_catalog_products.getUnique(module_website, val);
                     price = scraper_catalog_products.getPriceText(module_website, val);
+                    is_cod = scraper_catalog_products.getCod(module_website, val);
+                    
                     product = {
                         name: name,
                         img: image,
                         href: href,
                         price: price,
-                        unique: unique
+                        unique: unique,
+                        is_cod: is_cod,
                     }
                     products.push(product);
                 })
