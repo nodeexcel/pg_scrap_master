@@ -49,6 +49,11 @@ pm2 start node --name scrap_website_products_Snapdeal -- scrap_website_products.
 
 ```
 
+### PM2 Run express application to view stats
+```
+pm2 start bin/www --name APP_pg_scrap_master
+```
+
 ### Forcefully run scraping products at any time
 ```
 node scrap_website_products.js Flipkart skip_day_check
