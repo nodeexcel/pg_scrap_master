@@ -9,6 +9,7 @@ var hbs = require('nodemailer-express-handlebars');
 var smtpTransport = require('nodemailer-smtp-transport');
 var mandrill = require('mandrill-api/mandrill');
 var jwt = require('jwt-simple');
+var moment = require('moment');
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var conn_pg_catalog_urls = mongoose.createConnection('mongodb://127.0.0.1/pg_scrap_data');
@@ -67,6 +68,7 @@ var _ = require('underscore');
 //*******************************************************************************************************
 var master_website_list = ['amazon', 'Flipkart', 'Snapdeal', 'paytm', 'shopclues'];
 var MASTER_WEBSITE = false;
+var SKIP_DAY_CHECK = false;
 var args = process.argv.slice(2);
 if (args.length == 0) {
     console.log('Please pass a master website to start. So DIE!!!');
@@ -79,6 +81,11 @@ if (args.length == 0) {
     } else {
         console.log(arg_website + " :: is not a valid master website. So DIE!!!");
         process.exit(0);
+    }
+    // check for skip day check 
+    arg_skip_day_check = args[1];
+    if( arg_skip_day_check === 'skip_day_check' ){
+        SKIP_DAY_CHECK = true;
     }
 }
 console.log('Master Website :: ' + MASTER_WEBSITE);
@@ -645,38 +652,55 @@ function start_scrapping(pending_catalog_urls) {
 
 //----SCRIPT STARTING POINT--------------------------------------------
 
+// scraping will only run on SUNDAY
 
 function initiateScrapping() {
     //    w = {
     //        '_id' : '5694e413c23429483522b03c'
     //    }
-    w = {
-        'website': MASTER_WEBSITE,
-        '$or': [
-            { 'scrap_status': 0 },
-            { 'scrap_status': { '$exists': false } },
-        ]
-    }
-    conn_catalog_urls.find(w, function(err, urls) {
-        if (typeof urls == 'undefined' || urls.length == 0) {
-            console.log('no urls found------ reseting all urls');
-            conn_catalog_urls.update({
-                'website': MASTER_WEBSITE,
-            }, {
-                $set: { 'scrap_status': 0 }
-            }, {
-                multi: true
-            }, function(err, res) {
-                if (err) {} else {
-                    initiateScrapping();
-                    console.log('update hua hau');
-                }
-            });
-        } else {
-            //urls = _.first( urls , 5);
-            start_scrapping(urls);
+
+    // added on 20th feb 2018
+    // website scraping will only start if the current day is Sunday
+    var currentDay = moment().format('dddd');
+    console.log('Today is -- ' + currentDay );
+    console.log('Today is -- ' + currentDay );
+    console.log('Today is -- ' + currentDay );
+
+    // if( currentDay !== 'Tuesday') {
+    if( currentDay !== 'Sunday' && SKIP_DAY_CHECK === false ) {
+        console.log('Sunday -- is scraping day!! So exiting scraping!');
+        console.log('Script will exit in 2 hour');
+        GENERIC.wait(1000 * 60 * 60 * 2 ); // wait till every 2 hours
+        process.exit(0);
+    }else{
+        w = {
+            'website': MASTER_WEBSITE,
+            '$or': [
+                { 'scrap_status': 0 },
+                { 'scrap_status': { '$exists': false } },
+            ]
         }
-    })
+        conn_catalog_urls.find(w, function(err, urls) {
+            if (typeof urls == 'undefined' || urls.length == 0) {
+                console.log('no urls found------ reseting all urls');
+                conn_catalog_urls.update({
+                    'website': MASTER_WEBSITE,
+                }, {
+                    $set: { 'scrap_status': 0 }
+                }, {
+                    multi: true
+                }, function(err, res) {
+                    if (err) {} else {
+                        initiateScrapping();
+                        console.log('update hua hau');
+                    }
+                });
+            } else {
+                //urls = _.first( urls , 5);
+                start_scrapping(urls);
+            }
+        })
+    }
 }
 
 function unwantedProduct(days, no_of_times, callback) {
