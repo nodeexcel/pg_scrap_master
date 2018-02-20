@@ -1,5 +1,7 @@
 # README #
 
+Scraping products sripts run only on SUNDAY
+
 Scraping master for amazon, flipkart, snapdeal, paytm, shopclues e-commerce websites
 
 ### create a .env file where environment variables can be add
@@ -33,4 +35,21 @@ SENDGRID_API_KEY=key
 - environemt file is added to use it secret keys from it
 - scraping scripts will run on Sunday Only
 
+```
+
+
+### PM2 Run
+
+```
+pm2 start node --name scrap_website_products_Flipkart -- scrap_website_products.js Flipkart
+pm2 start node --name scrap_website_products_amazon -- scrap_website_products.js amazon
+pm2 start node --name scrap_website_products_shopclues -- scrap_website_products.js shopclues
+pm2 start node --name scrap_website_products_paytm -- scrap_website_products.js paytm
+pm2 start node --name scrap_website_products_Snapdeal -- scrap_website_products.js Snapdeal
+
+```
+
+### Forcefully run scraping products at any time
+```
+node scrap_website_products.js Flipkart skip_day_check
 ```
