@@ -1,7 +1,11 @@
 var FCM = require('fcm-node');
 
+// added to use secret keys from .env file
+require('dotenv').config({path: '../.env'})
+
 module.exports = {
-    push_notification: function(serverKey, token, payload, notify, callback) {
+    push_notification: function(token, payload, notify, callback) {
+        var serverKey = process.env.FCM_KEY
         var fcm = new FCM(serverKey);
         var message = {
             to: token,

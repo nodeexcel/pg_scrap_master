@@ -389,8 +389,7 @@ function add_update_product(u_rec_id, website, website_category, u_cat_id, u_sub
                                                         click_action: "FCM_PLUGIN_ACTIVITY",
                                                         "color": "#f95b2c"
                                                     };
-                                                    var serverKey = 'AAAAoDVUotg:APA91bGSSsdmlLFx9ihoi3Kq7XMrYr24pMKfL93j4M9p7qNg8eWeqYWmp9HSfbUhaqjZxEC9uvrXQ6_Fgs5mKUcov2xNKHqkKxUNx9Bd7rjhYJ2g7472Z-DxkPLZYv4cny8wah4w1LON';
-                                                    PUSH_MESSAGE.push_notification(serverKey, push_token, payload, notify, function(error, response) {
+                                                    PUSH_MESSAGE.push_notification(push_token, payload, notify, function(error, response) {
                                                         if (error == 'error') {
                                                             console.log(response);
                                                         } else {
